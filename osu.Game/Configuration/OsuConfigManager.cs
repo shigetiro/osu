@@ -90,6 +90,8 @@ namespace osu.Game.Configuration
                 }
             };
 
+            SetDefault(OsuSetting.CustomApiUrl, string.Empty);
+
             SetDefault(OsuSetting.ExternalLinkWarning, true);
             SetDefault(OsuSetting.PreferNoVideo, false);
 
@@ -476,6 +478,11 @@ namespace osu.Game.Configuration
         EditorShowStoryboard,
         EditorSubmissionNotifyOnDiscussionReplies,
         EditorSubmissionLoadInBrowserAfterSubmission,
+
+        /// <summary>
+        /// Custom API endpoint URL.
+        /// </summary>
+        CustomApiUrl,
 
         /// <summary>
         /// Cached state of whether local user is a supporter.
