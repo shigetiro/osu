@@ -232,6 +232,9 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.EditorSubmissionNotifyOnDiscussionReplies, true);
             SetDefault(OsuSetting.EditorSubmissionLoadInBrowserAfterSubmission, true);
 
+            // GU specific settings
+            SetDefault(OsuSetting.DisableAutomaticUpdates, false);
+
             SetDefault(OsuSetting.WasSupporter, false);
 
             // intentionally uses `DateTime?` and not `DateTimeOffset?` because the latter fails due to `DateTimeOffset` not implementing `IConvertible`
@@ -493,5 +496,11 @@ namespace osu.Game.Configuration
         LastOnlineTagsPopulation,
 
         AutomaticallyAdjustBeatmapOffset,
+
+        /// <summary>
+        /// Disables automatic updates for the GU version.
+        /// </summary>
+        DisableAutomaticUpdates
+
     }
 }
