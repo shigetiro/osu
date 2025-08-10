@@ -44,6 +44,7 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.BeatmapDetailTab, BeatmapDetailTab.Local);
             SetDefault(OsuSetting.BeatmapLeaderboardSortMode, LeaderboardSortMode.Score);
             SetDefault(OsuSetting.BeatmapDetailModsFilter, false);
+            SetDefault(OsuSetting.BeatmapLeaderboardSortMode, LeaderboardSortMode.Score);
 
             SetDefault(OsuSetting.ShowConvertedBeatmaps, true);
             SetDefault(OsuSetting.DisplayStarsMinimum, 0.0, 0, 10, 0.1);
@@ -500,7 +501,18 @@ namespace osu.Game.Configuration
         /// <summary>
         /// Disables automatic updates for the GU version.
         /// </summary>
-        DisableAutomaticUpdates
+
+        DisableAutomaticUpdates,
+
+        /// <summary>
+        /// The selected sort mode for the beatmap leaderboard in song select.
+        /// </summary>
+        BeatmapLeaderboardSortMode,
+
+        /// <summary>
+        /// Date of the last time online beatmap tags were populated into the local database.
+        /// </summary>
+        LastOnlineTagsPopulation
 
     }
 }
