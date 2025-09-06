@@ -168,15 +168,12 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer
             GameplayClockContainer.Reset();
         }
 
-        protected override void PerformFail()
+        protected override void OnFail()
         {
             // base logic intentionally suppressed - failing in multiplayer only marks the score with F rank
-            // see also: `MultiSpectatorPlayer.PerformFail()`
+            // see also: `MultiSpectatorPlayer.OnFail()`
             ScoreProcessor.FailScore(Score.ScoreInfo);
         }
-
-        protected override void ConcludeFailedScore(Score score)
-            => throw new NotSupportedException($"{nameof(MultiplayerPlayer)} should never be calling {nameof(ConcludeFailedScore)}. Failing in multiplayer only marks the score with F rank.");
 
         private void failAndBail(string? message = null)
         {

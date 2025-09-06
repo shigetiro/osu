@@ -95,14 +95,14 @@ namespace osu.Game.Screens.Play
                                     Anchor = Anchor.Centre,
                                     Origin = Anchor.Centre,
                                     Font = OsuFont.Style.Title,
-                                    Text = ReplayFailIndicatorStrings.ReplayFailed,
+                                    Text = "Replay Failed",
                                 },
                                 goToResultsButton = new RoundedButton
                                 {
                                     Anchor = Anchor.Centre,
                                     Origin = Anchor.Centre,
                                     Width = 150,
-                                    Text = ReplayFailIndicatorStrings.GoToResults,
+                                    Text = "Go to Results",
                                     Action = GoToResults,
                                 }
                             }

@@ -32,7 +32,8 @@ namespace osu.Game.Updater
         [BackgroundDependencyLoader]
         private void load(OsuGameBase game)
         {
-            version = game.Version.Split('-').First();
+            // Remove 'v' prefix from version for Android compatibility
+            version = game.Version.TrimStart('v').Split('-').First();
             stream = Enum.TryParse(game.Version.Split('-').Last(), true, out ReleaseStream s) ? s : Configuration.ReleaseStream.Lazer;
         }
 
@@ -42,7 +43,8 @@ namespace osu.Game.Updater
             {
                 bool includePrerelease = stream == Configuration.ReleaseStream.Tachyon;
 
-                OsuJsonWebRequest<GitHubRelease[]> releasesRequest = new OsuJsonWebRequest<GitHubRelease[]>("https://api.github.com/repos/ppy/osu/releases?per_page=10&page=1");
+                // Use GooGuTeam repository instead of official osu repository
+                OsuJsonWebRequest<GitHubRelease[]> releasesRequest = new OsuJsonWebRequest<GitHubRelease[]>("https://api.github.com/repos/GooGuTeam/osu/releases?per_page=10&page=1");
                 await releasesRequest.PerformAsync(cancellationToken).ConfigureAwait(false);
 
                 GitHubRelease[] releases = releasesRequest.ResponseObject;
@@ -51,7 +53,8 @@ namespace osu.Game.Updater
                 if (latest == null)
                     return false;
 
-                string latestTagName = latest.TagName.Split('-').First();
+                // Remove 'v' prefix for Android version comparison
+                string latestTagName = latest.TagName.TrimStart('v').Split('-').First();
 
                 if (latestTagName != version && tryGetBestUrl(latest, out string? url))
                 {

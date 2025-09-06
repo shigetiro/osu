@@ -110,8 +110,7 @@ namespace osu.Game.Rulesets.UI
             set
             {
                 allowBackwardsSeeks = value;
-                if (frameStabilityContainer != null)
-                    frameStabilityContainer.AllowBackwardsSeeks = value;
+                // Note: FrameStabilityContainer no longer supports AllowBackwardsSeeks property
             }
         }
 
@@ -190,7 +189,7 @@ namespace osu.Game.Rulesets.UI
             InternalChild = frameStabilityContainer = new FrameStabilityContainer(GameplayStartTime)
             {
                 FrameStablePlayback = FrameStablePlayback,
-                AllowBackwardsSeeks = AllowBackwardsSeeks,
+                // Note: AllowBackwardsSeeks is no longer supported by FrameStabilityContainer
                 Children = new Drawable[]
                 {
                     FrameStableComponents,
