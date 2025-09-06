@@ -191,7 +191,7 @@ namespace osu.Game.Screens.Play
         {
         }
 
-        protected override void PerformFail()
+        protected override void OnFail()
         {
             // base logic intentionally suppressed - we have our own custom fail interaction
             ScoreProcessor.FailScore(Score.ScoreInfo);

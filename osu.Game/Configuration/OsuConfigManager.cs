@@ -501,18 +501,7 @@ namespace osu.Game.Configuration
         /// <summary>
         /// Disables automatic updates for the GU version.
         /// </summary>
-
-        DisableAutomaticUpdates,
-
-        /// <summary>
-        /// The selected sort mode for the beatmap leaderboard in song select.
-        /// </summary>
-        BeatmapLeaderboardSortMode,
-
-        /// <summary>
-        /// Date of the last time online beatmap tags were populated into the local database.
-        /// </summary>
-        LastOnlineTagsPopulation
+        DisableAutomaticUpdates
 
     }
 }
