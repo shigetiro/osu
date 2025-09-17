@@ -294,12 +294,37 @@ jobs:
       shell: bash
       env:
         ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       run: |
         echo "Setting up Android keystore for signing..."
         # 从 Secrets 中获取 base64 编码的 keystore
         if [[ -n "$ANDROID_KEYSTORE_BASE64" ]]; then
           echo "Using keystore from GitHub Secrets"
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > osu.keystore
+          
+          # 验证解码后的keystore文件
+          if [[ ! -f "osu.keystore" ]] || [[ ! -s "osu.keystore" ]]; then
+            echo "ERROR: Failed to decode keystore from base64"
+            exit 1
+          fi
+          
+          # 验证keystore密码和别名
+          if [[ -z "$ANDROID_KEYSTORE_PASSWORD" ]] || [[ -z "$ANDROID_KEY_ALIAS" ]] || [[ -z "$ANDROID_KEY_PASSWORD" ]]; then
+            echo "ERROR: Android signing secrets are incomplete!"
+            echo "Required secrets: ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD"
+            exit 1
+          fi
+          
+          # 测试keystore是否可以访问
+          echo "Verifying keystore integrity..."
+          keytool -list -keystore osu.keystore -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" || {
+            echo "ERROR: Cannot access keystore with provided credentials"
+            exit 1
+          }
+          
+          echo "Keystore setup successful"
         else
           echo "No keystore found in secrets, creating temporary one..."
           keytool -genkey -v \
@@ -332,6 +357,14 @@ jobs:
           
           echo "Using Java version: $(java -version 2>&1 | head -n 1)"
           echo "Android SDK Root: $ANDROID_SDK_ROOT"
+          echo "Keystore file exists: $(test -f osu.keystore && echo 'Yes' || echo 'No')"
+          echo "Using key alias: $KEY_ALIAS"
+          
+          # 确保keystore文件存在
+          if [[ ! -f "osu.keystore" ]]; then
+            echo "ERROR: Keystore file not found!"
+            exit 1
+          fi
           
           dotnet publish osu.Android/osu.Android.csproj \
             --configuration Release \
@@ -345,11 +378,27 @@ jobs:
             -p:AndroidSigningKeyStore=../osu.keystore \
             -p:AndroidSigningKeyAlias="$KEY_ALIAS" \
             -p:AndroidSigningKeyPass="$KEY_PASS" \
-            -p:AndroidSigningStorePass="$KEYSTORE_PASS"
+            -p:AndroidSigningStorePass="$KEYSTORE_PASS" \
+            -p:AndroidPackageFormat=apk
           
           # Create output directory and copy APK
           mkdir -p "publish/${{ matrix.runtime }}"
-          find osu.Android/bin/Release/ -name "*.apk" -exec cp {} "publish/${{ matrix.runtime }}/${{ matrix.executable }}" \;
+          
+          # Find the signed APK
+          APK_FILE=$(find osu.Android/bin/Release/ -name "*.apk" | head -1)
+          if [[ -z "$APK_FILE" ]]; then
+            echo "ERROR: No APK file found after build!"
+            exit 1
+          fi
+          
+          echo "Found APK: $APK_FILE"
+          cp "$APK_FILE" "publish/${{ matrix.runtime }}/${{ matrix.executable }}"
+          
+          # 验证APK是否已签名
+          if command -v aapt2 &> /dev/null; then
+            echo "Verifying APK signature..."
+            aapt2 dump badging "publish/${{ matrix.runtime }}/${{ matrix.executable }}" | grep -E "application-label|package" || true
+          fi
         else
           # Desktop build
           dotnet publish osu.Desktop/osu.Desktop.csproj \

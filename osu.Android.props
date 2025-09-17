@@ -8,6 +8,13 @@
     <!-- NullabilityInfoContextSupport is disabled by default for Android -->
     <NullabilityInfoContextSupport>true</NullabilityInfoContextSupport>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    
+    <!-- Android signing configuration -->
+    <AndroidKeyStore Condition="'$(AndroidKeyStore)' == ''">false</AndroidKeyStore>
+    <AndroidSigningKeyStore Condition="'$(AndroidSigningKeyStore)' != '' AND '$(AndroidKeyStore)' == 'true'">$(AndroidSigningKeyStore)</AndroidSigningKeyStore>
+    <AndroidSigningKeyAlias Condition="'$(AndroidSigningKeyAlias)' != '' AND '$(AndroidKeyStore)' == 'true'">$(AndroidSigningKeyAlias)</AndroidSigningKeyAlias>
+    <AndroidSigningKeyPass Condition="'$(AndroidSigningKeyPass)' != '' AND '$(AndroidKeyStore)' == 'true'">$(AndroidSigningKeyPass)</AndroidSigningKeyPass>
+    <AndroidSigningStorePass Condition="'$(AndroidSigningStorePass)' != '' AND '$(AndroidKeyStore)' == 'true'">$(AndroidSigningStorePass)</AndroidSigningStorePass>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ppy.osu.Framework.Android" Version="2025.908.0" />
