@@ -1,4 +1,4 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
@@ -152,12 +152,23 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double accuracyValue = computeAccuracyValue(score, osuAttributes);
             double flashlightValue = computeFlashlightValue(score, osuAttributes);
 
+            // Compute for Relax if the mod is active
+            double relaxAimValue = 0.0;
+            double relaxAccuracyValue = 0.0;
+            if (score.Mods.Any(m => m is OsuModRelax))
+            {
+                relaxAimValue = computeRelaxAimValue(score, osuAttributes);
+                relaxAccuracyValue = computeRelaxAccuracyValue(score, osuAttributes);
+            }
+
             double totalValue =
                 Math.Pow(
                     Math.Pow(aimValue, 1.1) +
                     Math.Pow(speedValue, 1.1) +
                     Math.Pow(accuracyValue, 1.1) +
-                    Math.Pow(flashlightValue, 1.1), 1.0 / 1.1
+                    Math.Pow(flashlightValue, 1.1) +
+                    Math.Pow(relaxAimValue, 1.1) +
+                    Math.Pow(relaxAccuracyValue, 1.1), 1.0 / 1.1
                 ) * multiplier;
 
             return new OsuPerformanceAttributes
@@ -168,6 +179,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 Flashlight = flashlightValue,
                 EffectiveMissCount = effectiveMissCount,
                 SpeedDeviation = speedDeviation,
+                RelaxAim = relaxAimValue,
+                RelaxAccuracy = relaxAccuracyValue,
                 Total = totalValue
             };
         }
@@ -202,21 +215,22 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             double aimValue = OsuStrainSkill.DifficultyToPerformance(aimDifficulty);
 
+            double totalHits = this.totalHits;
+            
             double lengthBonus = 0.95 + 0.4 * Math.Min(1.0, totalHits / 2000.0) +
                                  (totalHits > 2000 ? Math.Log10(totalHits / 2000.0) * 0.5 : 0.0);
             aimValue *= lengthBonus;
 
             if (effectiveMissCount > 0)
-                aimValue *= calculateMissPenalty(effectiveMissCount, attributes.AimDifficultStrainCount);
+                aimValue *= calculateMissPenalty(effectiveMissCount, attributes.AimDifficultStrainCount, score);
 
             double approachRateFactor = 0.0;
             if (approachRate > 10.33)
                 approachRateFactor = 0.3 * (approachRate - 10.33);
-            else if (approachRate < 8.0)
-                approachRateFactor = 0.05 * (8.0 - approachRate);
-
-            if (score.Mods.Any(h => h is OsuModRelax))
-                approachRateFactor = 0.0;
+            
+            double lowArFactorBasis = 0.05;
+            if (approachRate < 8.0)
+                approachRateFactor = lowArFactorBasis * (8.0 - approachRate);
 
             aimValue *= 1.0 + approachRateFactor * lengthBonus; // Buff for longer maps with high AR.
 
@@ -224,11 +238,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 aimValue *= 1.3 + (totalHits * (0.0016 / (1 + 2 * effectiveMissCount)) * Math.Pow(accuracy, 16)) * (1 - 0.003 * attributes.DrainRate * attributes.DrainRate);
             else if (score.Mods.Any(m => m is OsuModHidden || m is OsuModTraceable))
             {
-                // We want to give more reward for lower AR when it comes to aim and HD. This nerfs high AR and buffs lower AR.
-                aimValue *= 1.0 + 0.04 * (12.0 - approachRate);
+                double hdFactor = 1.0 + 0.04 * (12.0 - approachRate);
+                aimValue *= hdFactor;
             }
 
             aimValue *= accuracy;
+            
             // It is important to consider accuracy difficulty when scaling with accuracy.
             aimValue *= 0.98 + Math.Pow(Math.Max(0, overallDifficulty), 2) / 2500;
 
@@ -242,12 +257,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             double speedValue = OsuStrainSkill.DifficultyToPerformance(attributes.SpeedDifficulty);
 
+            double totalHits = this.totalHits;
             double lengthBonus = 0.95 + 0.4 * Math.Min(1.0, totalHits / 2000.0) +
                                  (totalHits > 2000 ? Math.Log10(totalHits / 2000.0) * 0.5 : 0.0);
             speedValue *= lengthBonus;
 
             if (effectiveMissCount > 0)
-                speedValue *= calculateMissPenalty(effectiveMissCount, attributes.SpeedDifficultStrainCount);
+                speedValue *= calculateMissPenalty(effectiveMissCount, attributes.SpeedDifficultStrainCount, score);
 
             double approachRateFactor = 0.0;
             if (approachRate > 10.33)
@@ -331,6 +347,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             double flashlightValue = Flashlight.DifficultyToPerformance(attributes.FlashlightDifficulty);
 
+            double totalHits = this.totalHits;
             // Penalize misses by assessing # of misses relative to the total # of objects. Default a 3% reduction for any # of misses.
             if (effectiveMissCount > 0)
                 flashlightValue *= 0.97 * Math.Pow(1 - Math.Pow(effectiveMissCount / totalHits, 0.775), Math.Pow(effectiveMissCount, .875));
@@ -347,6 +364,122 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             flashlightValue *= 0.98 + Math.Pow(Math.Max(0, overallDifficulty), 2) / 2500;
 
             return flashlightValue;
+        }
+
+        private double computeRelaxAimValue(ScoreInfo score, OsuDifficultyAttributes attributes)
+        {
+            if (!score.Mods.Any(h => h is OsuModRelax))
+                return 0.0;
+
+            // 计算 Relax 模式的 Aim 值
+            double aimRating = attributes.AimDifficulty;
+            // 使用 Relax 技能的难度到性能转换而不是 Aim 技能
+            double aimPerformance = Relax.DifficultyToPerformance(aimRating);
+
+            // 应用与常规 Aim 相同的长度奖励
+            double totalHits = this.totalHits;
+            // Relax 模式使用不同的长度奖励基础值
+            double lengthBonus = 0.88 + 0.4 * Math.Min(1.0, totalHits / 2000.0) +
+                                 (totalHits > 2000 ? Math.Log10(totalHits / 2000.0) * 0.5 : 0.0);
+            aimPerformance *= lengthBonus;
+
+            // 应用 Miss 惩罚
+            if (effectiveMissCount > 0)
+                aimPerformance *= calculateMissPenalty(effectiveMissCount, attributes.AimDifficultStrainCount, score);
+
+            // 应用 AR 因素
+            double approachRateFactor = 0.0;
+            if (approachRate > 10.33)
+                approachRateFactor = 0.3 * (approachRate - 10.33);
+            
+            // Relax 模式使用不同的低 AR 因子基础值
+            double lowArFactorBasis = 0.025;
+            if (approachRate < 8.0)
+                approachRateFactor = lowArFactorBasis * (8.0 - approachRate);
+
+            aimPerformance *= 1.0 + approachRateFactor * lengthBonus;
+
+            // 应用 Mod 奖励
+            if (score.Mods.Any(m => m is OsuModBlinds))
+                aimPerformance *= 1.3 + (totalHits * (0.0016 / (1 + 2 * effectiveMissCount)) * Math.Pow(accuracy, 16)) * (1 - 0.003 * attributes.DrainRate * attributes.DrainRate);
+            else if (score.Mods.Any(m => m is OsuModHidden || m is OsuModTraceable))
+            {
+                // Relax 模式使用不同的 HD 因子
+                double hdFactor = 1.0 + 0.05 * (11.0 - approachRate);
+                aimPerformance *= hdFactor;
+            }
+
+            // EZ 奖励用于 Relax
+            if (score.Mods.Any(m => m is OsuModEasy))
+            {
+                double baseBuff = 1.08;
+                if (approachRate <= 8.0)
+                    baseBuff += (7.0 - approachRate) / 100.0;
+                aimPerformance *= baseBuff;
+            }
+
+            // 精度奖励（读图）用于 Relax
+            if (attributes.CircleSize > 5.58)
+            {
+                aimPerformance *= Math.Pow(Math.Pow(attributes.CircleSize - 5.46, 1.8) + 1.0, 0.03);
+                // 高 CS 和高 AR 的特殊奖励
+                if (approachRate > 10.8)
+                {
+                    aimPerformance *= 1.0 + (approachRate - 10.8);
+                    aimPerformance *= 1.0 + Math.Clamp(attributes.CircleSize - 6.0, 0.0, 0.2);
+                }
+            }
+
+            // 调整准确度奖励用于 RX
+            aimPerformance *= 0.3 + accuracy / 2.0;
+
+            // 考虑准确度难度时进行缩放
+            aimPerformance *= 0.98 + Math.Pow(Math.Max(0, overallDifficulty), 2) / 2500;
+
+            // Relax 模式正常时钟速率分数的额外奖励
+            if (clockRate <= 1.0)
+            {
+                aimPerformance *= 1.20;
+            }
+
+            return aimPerformance;
+        }
+
+        private double computeRelaxAccuracyValue(ScoreInfo score, OsuDifficultyAttributes attributes)
+        {
+            if (!score.Mods.Any(h => h is OsuModRelax))
+                return 0.0;
+
+            // Relax 模式没有独立的准确度技能，但我们可以基于准确度计算一个值
+            // 这个值基于整体准确度和 OD
+            double betterAccuracyPercentage;
+            int amountHitObjectsWithAccuracy = attributes.HitCircleCount;
+
+            if (amountHitObjectsWithAccuracy > 0)
+                betterAccuracyPercentage = (countGreat * 6 + countOk * 2 + countMeh) / (double)(amountHitObjectsWithAccuracy * 6);
+            else
+                betterAccuracyPercentage = 0;
+
+            // 确保百分比不为负数
+            if (betterAccuracyPercentage < 0)
+                betterAccuracyPercentage = 0;
+
+            // 使用类似常规准确度的计算方法，但调整参数以适应 Relax 模式
+            double accuracyValue = Math.Pow(1.52163, overallDifficulty) * Math.Pow(betterAccuracyPercentage, 24) * 2.83;
+
+            // 奖励多个打击对象 - 长时间保持良好准确度更难
+            accuracyValue *= Math.Min(1.15, Math.Pow(amountHitObjectsWithAccuracy / 1000.0, 0.3));
+
+            // 增加准确度值的对象计数奖励
+            if (score.Mods.Any(m => m is OsuModBlinds))
+                accuracyValue *= 1.14;
+            else if (score.Mods.Any(m => m is OsuModHidden || m is OsuModTraceable))
+                accuracyValue *= 1.08;
+
+            if (score.Mods.Any(m => m is OsuModFlashlight))
+                accuracyValue *= 1.02;
+
+            return accuracyValue;
         }
 
         /// <summary>
@@ -413,7 +546,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 deviation = limitValue;
 
             // Then compute the variance for mehs.
-            double mehVariance = (mehHitWindow * mehHitWindow + okHitWindow * mehHitWindow + okHitWindow * okHitWindow) / 3;
+            double mehVariance = (mehHitWindow * mehHitWindow + okHitWindow * okHitWindow + okHitWindow * okHitWindow) / 3;
 
             // Find the total deviation.
             deviation = Math.Sqrt(((relevantCountGreat + relevantCountOk) * Math.Pow(deviation, 2) + relevantCountMeh * mehVariance) / (relevantCountGreat + relevantCountOk + relevantCountMeh));
@@ -450,7 +583,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         // Miss penalty assumes that a player will miss on the hardest parts of a map,
         // so we use the amount of relatively difficult sections to adjust miss penalty
         // to make it more punishing on maps with lower amount of hard sections.
-        private double calculateMissPenalty(double missCount, double difficultStrainCount) => 0.96 / ((missCount / (4 * Math.Pow(Math.Log(difficultStrainCount), 0.94))) + 1);
+        private double calculateMissPenalty(double missCount, double difficultStrainCount, ScoreInfo score) 
+        {
+            // For Relax, use different miss penalty
+            if (score.Mods.Any(m => m is OsuModRelax))
+            {
+                return 0.97 * Math.Pow(1.0 - Math.Pow(missCount / totalHits, 0.5), 1.0 + missCount / 1.5);
+            }
+            
+            return 0.96 / ((missCount / (4 * Math.Pow(Math.Log(difficultStrainCount), 0.94))) + 1);
+        }
+        
         private double getComboScalingFactor(OsuDifficultyAttributes attributes) => attributes.MaxCombo <= 0 ? 1.0 : Math.Min(Math.Pow(scoreMaxCombo, 0.8) / Math.Pow(attributes.MaxCombo, 0.8), 1.0);
 
         private int totalHits => countGreat + countOk + countMeh + countMiss;
