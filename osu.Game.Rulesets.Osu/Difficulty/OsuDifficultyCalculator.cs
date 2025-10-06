@@ -15,8 +15,6 @@ using osu.Game.Rulesets.Osu.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Osu.Difficulty.Skills;
 using osu.Game.Rulesets.Osu.Mods;
 using osu.Game.Rulesets.Osu.Objects;
-using osu.Game.Rulesets.Osu.Scoring;
-using osu.Game.Rulesets.Scoring;
 
 namespace osu.Game.Rulesets.Osu.Difficulty
 {
@@ -53,58 +51,38 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             var flashlight = skills.OfType<Flashlight>().SingleOrDefault();
             double flashlightRating = flashlight == null ? 0.0 : Math.Sqrt(flashlight.DifficultyValue()) * difficulty_multiplier;
 
-            var relax = skills.OfType<Relax>().SingleOrDefault();
-
             if (mods.Any(m => m is OsuModTouchDevice))
             {
                 aimRating = Math.Pow(aimRating, 0.8);
                 flashlightRating = Math.Pow(flashlightRating, 0.8);
             }
 
-            // 修正mod分支，严格对齐rosu-pp逻辑
-            double baseAimPerformance = 0.0;
-            double baseSpeedPerformance = 0.0;
-            double baseFlashlightPerformance = 0.0;
-
-            if (mods.Any(h => h is OsuModRelax) && relax != null)
+            if (mods.Any(h => h is OsuModRelax))
             {
-                aimRating = Math.Sqrt(relax.DifficultyValue()) * difficulty_multiplier;
-                difficultSliders = relax.GetDifficultSliders();
+                aimRating *= 0.9;
                 speedRating = 0.0;
                 flashlightRating *= 0.7;
-                baseAimPerformance = OsuStrainSkill.DifficultyToPerformance(aimRating);
-                // Relax下speed和flashlight不计入performance
             }
             else if (mods.Any(h => h is OsuModAutopilot))
             {
                 speedRating *= 0.5;
                 aimRating = 0.0;
                 flashlightRating *= 0.4;
-                baseSpeedPerformance = OsuStrainSkill.DifficultyToPerformance(speedRating);
-                // Autopilot下aim和flashlight不计入performance
-            }
-            else
-            {
-                baseAimPerformance = OsuStrainSkill.DifficultyToPerformance(aimRating);
-                baseSpeedPerformance = OsuStrainSkill.DifficultyToPerformance(speedRating);
-                if (mods.Any(h => h is OsuModFlashlight))
-                    baseFlashlightPerformance = Flashlight.DifficultyToPerformance(flashlightRating);
             }
 
-            double basePerformance;
-            if (mods.Any(h => h is OsuModRelax) && relax != null)
-            {
-                basePerformance = baseAimPerformance;
-            }
-            else
-            {
-                basePerformance =
-                    Math.Pow(
-                        Math.Pow(baseAimPerformance, 1.1) +
-                        Math.Pow(baseSpeedPerformance, 1.1) +
-                        Math.Pow(baseFlashlightPerformance, 1.1), 1.0 / 1.1
-                    );
-            }
+            double baseAimPerformance = OsuStrainSkill.DifficultyToPerformance(aimRating);
+            double baseSpeedPerformance = OsuStrainSkill.DifficultyToPerformance(speedRating);
+            double baseFlashlightPerformance = 0.0;
+
+            if (mods.Any(h => h is OsuModFlashlight))
+                baseFlashlightPerformance = Flashlight.DifficultyToPerformance(flashlightRating);
+
+            double basePerformance =
+                Math.Pow(
+                    Math.Pow(baseAimPerformance, 1.1) +
+                    Math.Pow(baseSpeedPerformance, 1.1) +
+                    Math.Pow(baseFlashlightPerformance, 1.1), 1.0 / 1.1
+                );
 
             double starRating = basePerformance > 0.00001
                 ? Math.Cbrt(OsuPerformanceCalculator.PERFORMANCE_BASE_MULTIPLIER) * 0.027 * (Math.Cbrt(100000 / Math.Pow(2, 1 / 1.1) * basePerformance) + 4)
@@ -144,12 +122,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // The first jump is formed by the first two hitobjects of the map.
             // If the map has less than two OsuHitObjects, the enumerator will not return anything.
-            var hitObjects = beatmap.HitObjects.ToList(); // 将 IReadOnlyList 转换为 List
-
-            for (int i = 1; i < hitObjects.Count; i++)
+            for (int i = 1; i < beatmap.HitObjects.Count; i++)
             {
-                var lastLast = i > 1 ? hitObjects[i - 2] : null; // 移除冗余的显式类型转换
-                objects.Add(new OsuDifficultyHitObject(hitObjects[i], hitObjects[i - 1], lastLast, clockRate, objects, objects.Count));
+                var lastLast = i > 1 ? beatmap.HitObjects[i - 2] : null;
+                objects.Add(new OsuDifficultyHitObject(beatmap.HitObjects[i], beatmap.HitObjects[i - 1], lastLast, clockRate, objects, objects.Count));
             }
 
             return objects;
@@ -157,11 +133,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         protected override Skill[] CreateSkills(IBeatmap beatmap, Mod[] mods, double clockRate)
         {
-            // Calculate hit window for Relax skill
-            HitWindows hitWindows = new OsuHitWindows();
-            hitWindows.SetDifficulty(beatmap.Difficulty.OverallDifficulty);
-            double hitWindow = hitWindows.WindowFor(HitResult.Great) / clockRate;
-
             var skills = new List<Skill>
             {
                 new Aim(mods, true),
@@ -171,9 +142,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             if (mods.Any(h => h is OsuModFlashlight))
                 skills.Add(new Flashlight(mods));
-
-            if (mods.Any(h => h is OsuModRelax))
-                skills.Add(new Relax(mods, true, hitWindow));
 
             return skills.ToArray();
         }

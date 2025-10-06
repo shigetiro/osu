@@ -1,4 +1,4 @@
-// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
@@ -78,12 +78,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         /// The number of spinners in the beatmap.
         /// </summary>
         public int SpinnerCount { get; set; }
-
-        /// <summary>
-        /// The circle size of the beatmap.
-        /// </summary>
-        [JsonProperty("circle_size")]
-        public double CircleSize { get; set; }
 
         public override IEnumerable<(int attributeId, object value)> ToDatabaseAttributes()
         {
