@@ -19,19 +19,21 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     {
         public readonly bool IncludeSliders;
 
-        public Relax(Mod[] mods, bool includeSliders)
+        public Relax(Mod[] mods, bool includeSliders, double hitWindow)
             : base(mods)
         {
             IncludeSliders = includeSliders;
+            this.hitWindow = hitWindow;
         }
 
         private double currentStrain;
-        private double hitWindow;
+        private readonly double hitWindow;
 
         private double skillMultiplier => 24.16;
         private double strainDecayBase => 0.15;
 
         private readonly List<double> sliderStrains = new List<double>();
+        private readonly List<OsuDifficultyHitObject> difficultyObjects = new List<OsuDifficultyHitObject>();
 
         private double strainDecay(double ms) => Math.Pow(strainDecayBase, ms / 1000);
 
@@ -39,8 +41,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
         protected override double StrainValueAt(DifficultyHitObject current)
         {
+            var osuCurrent = (OsuDifficultyHitObject)current;
+            difficultyObjects.Add(osuCurrent);
+
             currentStrain *= strainDecay(current.DeltaTime);
-            currentStrain += RelaxAimEvaluator.EvaluateDifficultyOf((OsuDifficultyHitObject)current, null, hitWindow, IncludeSliders) * skillMultiplier;
+            currentStrain += RelaxAimEvaluator.EvaluateDifficultyOf(osuCurrent, difficultyObjects.ToArray(), hitWindow, IncludeSliders) * skillMultiplier;
 
             if (current.BaseObject is Slider)
             {
@@ -62,11 +67,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             return sliderStrains.Sum(strain => 1.0 / (1.0 + Math.Exp(-(strain / maxSliderStrain * 12.0 - 6.0))));
         }
 
-        public void SetHitWindow(double hitWindow)
-        {
-            this.hitWindow = hitWindow;
-        }
-        
-        public static double DifficultyToPerformance(double difficulty) => Math.Pow(5.0 * Math.Max(1.0, difficulty / 0.0675) - 4.0, 3.0) / 100000.0;
+        public new static double DifficultyToPerformance(double difficulty) => Math.Pow(5.0 * Math.Max(1.0, difficulty / 0.0675) - 4.0, 3.0) / 100000.0;
     }
 }

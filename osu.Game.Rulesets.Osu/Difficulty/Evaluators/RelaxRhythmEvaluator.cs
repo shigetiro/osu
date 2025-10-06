@@ -186,8 +186,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Evaluators
         private class RhythmIsland
         {
             private readonly double deltaDifferenceEps;
-            public readonly int Delta;
-            public int DeltaCount;
+            public int Delta { get; private set; }
+            public int DeltaCount { get; private set; }
 
             public RhythmIsland(double deltaDifferenceEps)
             {
@@ -205,17 +205,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Evaluators
 
             public void AddDelta(int delta)
             {
-                // Delta is read-only, so we can't modify it directly
-                // In the original Rust code, it's mutable, but in C# we need to handle this differently
-                // For now, we'll just increment the count without changing the delta
-                // This is a limitation of the direct translation
+                // 只在 delta 未初始化时赋值
+                if (Delta == int.MaxValue)
+                    Delta = Math.Max(OsuDifficultyHitObject.MIN_DELTA_TIME, delta);
                 DeltaCount++;
             }
 
             public bool IsSimilarPolarity(RhythmIsland other)
             {
-                // TODO: consider islands to be of similar polarity only if they're having the same average delta (we don't want to consider 3 singletaps similar to a triple)
-                //       naively adding delta check here breaks _a lot_ of maps because of the flawed ratio calculation
+                // 只比较奇偶性
                 return DeltaCount % 2 == other.DeltaCount % 2;
             }
 
@@ -228,7 +226,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Evaluators
             {
                 if (other == null)
                     return false;
-
                 return Math.Abs(Delta - other.Delta) < deltaDifferenceEps && DeltaCount == other.DeltaCount;
             }
         }
