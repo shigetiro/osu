@@ -70,7 +70,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(h => h is OsuModRelax))
             {
                 speedRating = 0.0;
-                flashlightRating *= 0.7;
             }
             else if (mods.Any(h => h is OsuModAutopilot))
             {
@@ -134,7 +133,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             for (int i = 1; i < beatmap.HitObjects.Count; i++)
             {
                 var lastLast = i > 1 ? beatmap.HitObjects[i - 2] : null;
-                objects.Add(new OsuDifficultyHitObject(beatmap.HitObjects[i], beatmap.HitObjects[i - 1], lastLast, clockRate, objects, objects.Count));
+                objects.Add(new OsuDifficultyHitObject(beatmap.HitObjects[i], beatmap.HitObjects[i - 1], lastLast, clockRate, objects, objects.Count, beatmap.Difficulty));
             }
 
             return objects;

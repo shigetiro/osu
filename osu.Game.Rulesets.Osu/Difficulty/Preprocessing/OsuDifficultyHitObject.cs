@@ -4,10 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Osu.Mods;
 using osu.Game.Rulesets.Osu.Objects;
+using osu.Game.Rulesets.Osu.Scoring;
 using osu.Game.Rulesets.Scoring;
 using osuTK;
 
@@ -89,7 +91,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         private readonly OsuHitObject? lastLastObject;
         private readonly OsuHitObject lastObject;
 
-        public OsuDifficultyHitObject(HitObject hitObject, HitObject lastObject, HitObject? lastLastObject, double clockRate, List<DifficultyHitObject> objects, int index)
+        public OsuDifficultyHitObject(HitObject hitObject, HitObject lastObject, HitObject? lastLastObject, double clockRate, List<DifficultyHitObject> objects, int index, IBeatmapDifficultyInfo difficulty)
             : base(hitObject, lastObject, clockRate, objects, index)
         {
             this.lastLastObject = lastLastObject as OsuHitObject;
@@ -98,14 +100,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             // Capped to 25ms to prevent difficulty calculation breaking from simultaneous objects.
             StrainTime = Math.Max(DeltaTime, MIN_DELTA_TIME);
 
-            if (BaseObject is Slider sliderObject)
-            {
-                HitWindowGreat = 2 * sliderObject.HeadCircle.HitWindows.WindowFor(HitResult.Great) / clockRate;
-            }
-            else
-            {
-                HitWindowGreat = 2 * BaseObject.HitWindows.WindowFor(HitResult.Great) / clockRate;
-            }
+            double greatWindow = IBeatmapDifficultyInfo.DifficultyRange(difficulty.OverallDifficulty, OsuHitWindows.GREAT_WINDOW_RANGE);
+            HitWindowGreat = 2 * greatWindow / clockRate;
 
             setDistances(clockRate);
         }
@@ -172,17 +168,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                 return;
 
             // We will scale distances by this factor, so we can assume a uniform CircleSize among beatmaps.
-            float scalingFactor = NORMALISED_RADIUS / (float)BaseObject.Radius;
+            double scalingFactor = NORMALISED_RADIUS / BaseObject.Radius;
 
             if (BaseObject.Radius < 30)
             {
-                float smallCircleBonus = Math.Min(30 - (float)BaseObject.Radius, 5) / 50;
+                double smallCircleBonus = Math.Min(30 - BaseObject.Radius, 5) / 50.0;
                 scalingFactor *= 1 + smallCircleBonus;
             }
 
             Vector2 lastCursorPosition = getEndCursorPosition(lastObject);
 
-            LazyJumpDistance = (BaseObject.StackedPosition * scalingFactor - lastCursorPosition * scalingFactor).Length;
+            LazyJumpDistance = getScaledDistance(BaseObject.StackedPosition, lastCursorPosition, scalingFactor);
             MinimumJumpTime = StrainTime;
             MinimumJumpDistance = LazyJumpDistance;
 
@@ -213,8 +209,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                 // Thus, the player is assumed to jump the minimum of these two distances in all cases.
                 //
 
-                float tailJumpDistance = Vector2.Subtract(lastSlider.TailCircle.StackedPosition, BaseObject.StackedPosition).Length * scalingFactor;
-                MinimumJumpDistance = Math.Max(0, Math.Min(LazyJumpDistance - (maximum_slider_radius - assumed_slider_radius), tailJumpDistance - maximum_slider_radius));
+                double maximumSliderRadius = maximum_slider_radius;
+                double assumedSliderRadius = assumed_slider_radius;
+
+                double tailJumpDistance = getScaledDistance(lastSlider.TailCircle.StackedPosition, BaseObject.StackedPosition, scalingFactor);
+                MinimumJumpDistance = Math.Max(0, Math.Min(LazyJumpDistance - (maximumSliderRadius - assumedSliderRadius), tailJumpDistance - maximumSliderRadius));
             }
 
             if (lastLastObject != null && !(lastLastObject is Spinner))
@@ -229,6 +228,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
 
                 Angle = Math.Abs(Math.Atan2(det, dot));
             }
+        }
+
+        private static double getScaledDistance(Vector2 first, Vector2 second, double scalingFactor)
+        {
+            double dx = (first.X - second.X) * scalingFactor;
+            double dy = (first.Y - second.Y) * scalingFactor;
+            return Math.Sqrt(dx * dx + dy * dy);
         }
 
         private void computeSliderCursorPosition(Slider slider)
