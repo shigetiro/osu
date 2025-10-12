@@ -26,7 +26,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Evaluators
 
             // Calculate the velocity to the current hitobject, which starts
             // with a base distance / time assuming the last object is a hitcircle.
-            double currVelocity = current.LazyJumpDistance / current.StrainTime;
+            double currVelocity = current.LazyJumpDistance / current.AdjustedDeltaTime;
 
             // But if the last object is a slider, then we extend the travel velocity through the slider into the current object.
             if (withSliderTravelDistance && last.BaseObject is Slider)
@@ -39,7 +39,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Evaluators
             }
 
             // As above, do the same for the previous hitobject.
-            double prevVelocity = last.LazyJumpDistance / last.StrainTime;
+            double prevVelocity = last.LazyJumpDistance / last.AdjustedDeltaTime;
 
             if (withSliderTravelDistance && lastLast.BaseObject is Slider)
             {
@@ -62,7 +62,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Evaluators
             aimStrain *= Math.Clamp(streamNerf, 0.92, 0.98);
 
             // If rhythms are the same.
-            if (Math.Max(current.StrainTime, last.StrainTime) < 1.25 * Math.Min(current.StrainTime, last.StrainTime) && current.Angle is double currAngle && last.Angle is double lastAngle)
+            if (Math.Max(current.AdjustedDeltaTime, last.AdjustedDeltaTime) < 1.25 * Math.Min(current.AdjustedDeltaTime, last.AdjustedDeltaTime) && current.Angle is double currAngle
+                && last.Angle is double lastAngle)
             {
                 // Rewarding angles, take the smaller velocity as base.
                 double angleBonus = Math.Min(currVelocity, prevVelocity);
@@ -76,15 +77,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Evaluators
 
                 // R* Nerf strain time for above 300 1/2 fast objects smoothly.
                 const double nerf_base = 1.07;
-                double nerfStrainTime = current.StrainTime
-                                        * Math.Pow(nerf_base, DifficultyCalculationUtils.Smootherstep(DifficultyCalculationUtils.MillisecondsToBPM(current.StrainTime, 2), 300, 400));
+                double nerfAdjustedDeltaTime = current.AdjustedDeltaTime
+                                               * Math.Pow(nerf_base, DifficultyCalculationUtils.Smootherstep(DifficultyCalculationUtils.MillisecondsToBPM(current.AdjustedDeltaTime, 2), 300, 400));
 
                 // Apply full wide angle bonus for distance more than one diameter.
                 wideAngleBonus *= angleBonus * DifficultyCalculationUtils.Smootherstep(current.LazyJumpDistance, 0, diameter);
 
                 // Apply acute angle bonus for BPM above 300 1/2 and distance more than one diameter.
                 acuteAngleBonus *= angleBonus
-                                   * DifficultyCalculationUtils.Smootherstep(DifficultyCalculationUtils.MillisecondsToBPM(nerfStrainTime, 2), 300, 400)
+                                   * DifficultyCalculationUtils.Smootherstep(DifficultyCalculationUtils.MillisecondsToBPM(nerfAdjustedDeltaTime, 2), 300, 400)
                                    * DifficultyCalculationUtils.Smootherstep(current.LazyJumpDistance, diameter, diameter * 2);
 
                 // R* Penalize wide angles if their distances are quite small (consider as wide angle stream).
@@ -107,20 +108,20 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Evaluators
             if (Math.Max(prevVelocity, currVelocity) != 0)
             {
                 // We want to use the average velocity over the whole object when awarding differences, not the individual jump and slider path velocities.
-                prevVelocity = (last.LazyJumpDistance + lastLast.TravelDistance) / last.StrainTime;
-                currVelocity = (current.LazyJumpDistance + last.TravelDistance) / current.StrainTime;
+                prevVelocity = (last.LazyJumpDistance + lastLast.TravelDistance) / last.AdjustedDeltaTime;
+                currVelocity = (current.LazyJumpDistance + last.TravelDistance) / current.AdjustedDeltaTime;
 
                 // Scale with ratio of difference compared to 0.5 * max dist.
                 double distRatioBase = Math.Sin(Math.PI / 2 * Math.Abs(prevVelocity - currVelocity) / Math.Max(prevVelocity, currVelocity));
                 double distRatio = Math.Pow(distRatioBase, 2);
 
-                // Reward for % distance up to 125 / strainTime for overlaps where velocity is still changing.
-                double overlapVelocityBuff = Math.Min(diameter * 1.25 / Math.Min(current.StrainTime, last.StrainTime), Math.Abs(prevVelocity - currVelocity));
+                // Reward for % distance up to 125 / AdjustedDeltaTime for overlaps where velocity is still changing.
+                double overlapVelocityBuff = Math.Min(diameter * 1.25 / Math.Min(current.AdjustedDeltaTime, last.AdjustedDeltaTime), Math.Abs(prevVelocity - currVelocity));
 
                 velocityChangeBonus = overlapVelocityBuff * distRatio;
 
                 // Penalize for rhythm changes.
-                double bonusBase = Math.Min(current.StrainTime, last.StrainTime) / Math.Max(current.StrainTime, last.StrainTime);
+                double bonusBase = Math.Min(current.AdjustedDeltaTime, last.AdjustedDeltaTime) / Math.Max(current.AdjustedDeltaTime, last.AdjustedDeltaTime);
                 velocityChangeBonus *= Math.Pow(bonusBase, 2);
             }
 

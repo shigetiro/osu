@@ -51,9 +51,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Evaluators
                 // Either we're limited by time or limited by object count.
                 double currHistoricalDecay = Math.Min(noteDecay, timeDecay);
 
-                double currDelta = currObj.StrainTime;
-                double prevDelta = previous.StrainTime;
-                double lastDelta = last.StrainTime;
+                double currDelta = currObj.AdjustedDeltaTime;
+                double prevDelta = previous.AdjustedDeltaTime;
+                double lastDelta = last.AdjustedDeltaTime;
 
                 // Calculate how much current delta difference deserves a rhythm bonus. This reduces rhythm bonus for deltas that are multiples of each other.
                 double deltaDifferenceRatio = Math.Min(prevDelta, currDelta) / Math.Max(prevDelta, currDelta);
