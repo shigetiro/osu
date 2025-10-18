@@ -40,6 +40,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(m => m is OsuModTouchDevice))
                 aimRating = Math.Pow(aimRating, 0.8);
 
+            if (mods.Any(m => m is OsuModRelax))
+                aimRating *= 0.9;
+
             if (mods.Any(m => m is OsuModMagnetised))
             {
                 float magnetisedStrength = mods.OfType<OsuModMagnetised>().First().AttractionStrength.Value;
@@ -194,7 +197,16 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             bool isRelax = mods.OfType<OsuModRelax>().Any();
 
             // Start from normal curve, rewarding lower AR up to AR7
-            double readingBonus = isRelax ? 0.05 * (11.0 - Math.Max(approachRate, 7)) : 0.04 * (12.0 - Math.Max(approachRate, 7));
+            double readingBonus;
+
+            if (isRelax)
+            {
+                readingBonus = 0.05 * (11.0 - Math.Max(approachRate, 7));
+            }
+            else
+            {
+                readingBonus = (isAlwaysPartiallyVisible ? 0.025 : 0.04) * (12.0 - Math.Max(approachRate, 7));
+            }
 
             readingBonus *= visibilityFactor;
 
@@ -203,11 +215,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // For AR up to 0 - reduce reward for very low ARs when object is visible
             if (approachRate < 7)
-                readingBonus += (isAlwaysPartiallyVisible ? 0.03 : 0.045) * (7.0 - Math.Max(approachRate, 0)) * sliderVisibilityFactor;
+                readingBonus += (isAlwaysPartiallyVisible ? 0.02 : 0.045) * (7.0 - Math.Max(approachRate, 0)) * sliderVisibilityFactor;
 
             // Starting from AR0 - cap values so they won't grow to infinity
             if (approachRate < 0)
-                readingBonus += (isAlwaysPartiallyVisible ? 0.075 : 0.1) * (1 - Math.Pow(1.5, approachRate)) * sliderVisibilityFactor;
+                readingBonus += (isAlwaysPartiallyVisible ? 0.01 : 0.1) * (1 - Math.Pow(1.5, approachRate)) * sliderVisibilityFactor;
 
             return readingBonus;
         }
