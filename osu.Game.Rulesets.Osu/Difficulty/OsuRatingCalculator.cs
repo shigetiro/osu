@@ -40,9 +40,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(m => m is OsuModTouchDevice))
                 aimRating = Math.Pow(aimRating, 0.8);
 
-            if (mods.Any(m => m is OsuModRelax))
-                aimRating *= 0.9;
-
             if (mods.Any(m => m is OsuModMagnetised))
             {
                 float magnetisedStrength = mods.OfType<OsuModMagnetised>().First().AttractionStrength.Value;
