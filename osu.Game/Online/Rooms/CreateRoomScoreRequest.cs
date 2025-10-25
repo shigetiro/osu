@@ -16,14 +16,16 @@ namespace osu.Game.Online.Rooms
         private readonly BeatmapInfo beatmapInfo;
         private readonly int rulesetId;
         private readonly string versionHash;
+        private readonly string? rulesetHash;
 
-        public CreateRoomScoreRequest(long roomId, long playlistItemId, BeatmapInfo beatmapInfo, int rulesetId, string versionHash)
+        public CreateRoomScoreRequest(long roomId, long playlistItemId, BeatmapInfo beatmapInfo, int rulesetId, string versionHash, string? rulesetHash = null)
         {
             this.roomId = roomId;
             this.playlistItemId = playlistItemId;
             this.beatmapInfo = beatmapInfo;
             this.rulesetId = rulesetId;
             this.versionHash = versionHash;
+            this.rulesetHash = rulesetHash;
         }
 
         protected override WebRequest CreateWebRequest()
@@ -34,6 +36,9 @@ namespace osu.Game.Online.Rooms
             req.AddParameter("beatmap_id", beatmapInfo.OnlineID.ToString(CultureInfo.InvariantCulture));
             req.AddParameter("beatmap_hash", beatmapInfo.MD5Hash);
             req.AddParameter("ruleset_id", rulesetId.ToString(CultureInfo.InvariantCulture));
+
+            if (!string.IsNullOrEmpty(rulesetHash))
+                req.AddParameter("ruleset_hash", rulesetHash);
             return req;
         }
 
