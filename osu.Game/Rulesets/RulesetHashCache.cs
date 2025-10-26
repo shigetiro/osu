@@ -12,6 +12,13 @@ namespace osu.Game.Rulesets
         {
             foreach (var rulesetInfo in store.AvailableRulesets)
             {
+                if (rulesetInfo.OnlineID >= 0 && rulesetInfo.OnlineID <= 3)
+                {
+                    // Skip official rulesets as their hashes are hardcoded elsewhere.
+                    // Read it maybe crashes in some environments (like Android).
+                    continue;
+                }
+
                 Ruleset instance = rulesetInfo.CreateInstance();
                 using var str = File.OpenRead(instance.GetType().Assembly.Location);
                 RulesetsHashes[instance.ShortName] = str.ComputeMD5Hash();
