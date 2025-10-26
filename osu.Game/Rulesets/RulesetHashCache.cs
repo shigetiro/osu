@@ -6,7 +6,7 @@ namespace osu.Game.Rulesets
 {
     public class RulesetHashCache
     {
-        private readonly Dictionary<string, string> cache = new Dictionary<string, string>();
+        public readonly Dictionary<string, string> RulesetsHashes = new Dictionary<string, string>();
 
         public RulesetHashCache(RulesetStore store)
         {
@@ -14,13 +14,13 @@ namespace osu.Game.Rulesets
             {
                 Ruleset instance = rulesetInfo.CreateInstance();
                 using var str = File.OpenRead(instance.GetType().Assembly.Location);
-                cache[instance.ShortName] = str.ComputeMD5Hash();
+                RulesetsHashes[instance.ShortName] = str.ComputeMD5Hash();
             }
         }
 
         public string? GetHash(string shortName)
         {
-            cache.TryGetValue(shortName, out string? hash);
+            RulesetsHashes.TryGetValue(shortName, out string? hash);
             return hash;
         }
 
