@@ -15,12 +15,14 @@ namespace osu.Game.Online.Solo
         private readonly BeatmapInfo beatmapInfo;
         private readonly int rulesetId;
         private readonly string versionHash;
+        private readonly string? rulesetHash;
 
-        public CreateSoloScoreRequest(BeatmapInfo beatmapInfo, int rulesetId, string versionHash)
+        public CreateSoloScoreRequest(BeatmapInfo beatmapInfo, int rulesetId, string versionHash, string? rulesetHash = "")
         {
             this.beatmapInfo = beatmapInfo;
             this.rulesetId = rulesetId;
             this.versionHash = versionHash;
+            this.rulesetHash = rulesetHash;
         }
 
         protected override WebRequest CreateWebRequest()
@@ -30,6 +32,9 @@ namespace osu.Game.Online.Solo
             req.AddParameter("version_hash", versionHash);
             req.AddParameter("beatmap_hash", beatmapInfo.MD5Hash);
             req.AddParameter("ruleset_id", rulesetId.ToString(CultureInfo.InvariantCulture));
+
+            if (!string.IsNullOrEmpty(rulesetHash))
+                req.AddParameter("ruleset_hash", rulesetHash);
             return req;
         }
 

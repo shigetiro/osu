@@ -113,13 +113,13 @@ namespace osu.Game
             if (!string.IsNullOrEmpty(customUrl))
             {
                 customUrl = customUrl.TrimEnd('/');
-                
+
                 // Ensure the custom URL has a protocol scheme
                 if (!customUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !customUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 {
                     customUrl = "https://" + customUrl;
                 }
-                
+
                 config.APIUrl = customUrl;
                 config.WebsiteUrl = customUrl;
                 config.SpectatorUrl = $"{customUrl}/signalr/spectator";
@@ -185,6 +185,7 @@ namespace osu.Game
         protected SkinManager SkinManager { get; private set; }
 
         protected RealmRulesetStore RulesetStore { get; private set; }
+        protected RulesetHashCache RulesetHashCache { get; private set; }
 
         protected RealmKeyBindingStore KeyBindingStore { get; private set; }
 
@@ -305,6 +306,8 @@ namespace osu.Game
             dependencies.CacheAs<RulesetStore>(RulesetStore = new RealmRulesetStore(realm, Storage));
             dependencies.CacheAs<IRulesetStore>(RulesetStore);
 
+            dependencies.CacheAs(RulesetHashCache = new RulesetHashCache(RulesetStore));
+
             Decoder.RegisterDependencies(RulesetStore);
 
             dependencies.CacheAs(Storage);
@@ -337,7 +340,7 @@ namespace osu.Game
 
             CurrentLanguage.BindValueChanged(val => frameworkLocale.Value = val.NewValue.ToCultureCode());
 
-            dependencies.CacheAs(API ??= new APIAccess(this, LocalConfig, endpoints, VersionHash));
+            dependencies.CacheAs(API ??= new APIAccess(this, LocalConfig, endpoints, VersionHash, RulesetHashCache));
 
             var defaultBeatmap = new DummyWorkingBeatmap(Audio, Textures);
 

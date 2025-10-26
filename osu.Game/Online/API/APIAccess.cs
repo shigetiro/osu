@@ -26,6 +26,7 @@ using osu.Game.Online.API.Requests;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Chat;
 using osu.Game.Online.Notifications.WebSocket;
+using osu.Game.Rulesets;
 using osu.Game.Users;
 
 namespace osu.Game.Online.API
@@ -40,6 +41,8 @@ namespace osu.Game.Online.API
         private readonly OAuth authentication;
 
         private readonly Queue<APIRequest> queue = new Queue<APIRequest>();
+
+        private readonly RulesetHashCache rulesetHashCache;
 
         public EndpointConfiguration Endpoints { get; }
 
@@ -80,11 +83,12 @@ namespace osu.Game.Online.API
         private readonly CancellationTokenSource cancellationToken = new CancellationTokenSource();
         private readonly Logger log;
 
-        public APIAccess(OsuGameBase game, OsuConfigManager config, EndpointConfiguration endpoints, string versionHash)
+        public APIAccess(OsuGameBase game, OsuConfigManager config, EndpointConfiguration endpoints, string versionHash, RulesetHashCache rulesetHashCache)
         {
             this.game = game;
             this.config = config;
             this.versionHash = versionHash;
+            this.rulesetHashCache = rulesetHashCache;
 
             if (game.IsDeployedBuild)
                 APIVersion = game.AssemblyVersion.Major * 10000 + game.AssemblyVersion.Minor;
@@ -424,7 +428,7 @@ namespace osu.Game.Online.API
         }
 
         public IHubClientConnector GetHubConnector(string clientName, string endpoint) =>
-            new HubClientConnector(clientName, endpoint, this, versionHash);
+            new HubClientConnector(clientName, endpoint, this, versionHash, rulesetHashCache);
 
         public IChatClient GetChatClient() => new WebSocketChatClient(this);
 
