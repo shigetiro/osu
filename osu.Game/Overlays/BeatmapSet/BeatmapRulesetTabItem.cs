@@ -27,8 +27,8 @@ namespace osu.Game.Overlays.BeatmapSet
         private OsuSpriteText count;
         private Container countContainer;
 
-        public BeatmapRulesetTabItem(RulesetInfo value)
-            : base(value)
+        public BeatmapRulesetTabItem(RulesetInfo value, OverlayRulesetSelector overlayRulesetSelector)
+            : base(value, overlayRulesetSelector)
         {
         }
 
