@@ -89,7 +89,7 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Spectate
 
         protected override ResultsScreen CreateResults(ScoreInfo score) => new MultiSpectatorResultsScreen(score);
 
-        protected override void OnFail()
+        protected override void PerformFail()
         {
             // base logic intentionally suppressed - failing in multiplayer only marks the score with F rank
             // see also: `MultiplayerPlayer.OnFail()`
