@@ -300,9 +300,9 @@ namespace osu.Game.Screens.Play
             return paused;
         }
 
-        protected override void OnFail()
+        protected override void PerformFail()
         {
-            base.OnFail();
+            base.PerformFail();
 
             submitFromFailOrQuit();
         }
