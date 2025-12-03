@@ -300,22 +300,21 @@ namespace osu.Game.Screens.Play
             return paused;
         }
 
-        protected override void PerformFail()
+        protected override void ConcludeFailedScore(Score score)
         {
-            base.PerformFail();
-
-            submitFromFailOrQuit();
+            base.ConcludeFailedScore(score);
+            submitFromFailOrQuit(score);
         }
 
         public override bool OnExiting(ScreenExitEvent e)
         {
             bool exiting = base.OnExiting(e);
-            submitFromFailOrQuit();
+            submitFromFailOrQuit(Score);
             statics.SetValue(Static.LastLocalUserScore, Score?.ScoreInfo.DeepClone());
             return exiting;
         }
 
-        private void submitFromFailOrQuit()
+        private void submitFromFailOrQuit(Score score)
         {
             if (LoadedBeatmapSuccessfully)
             {
