@@ -319,7 +319,7 @@ namespace osu.Game.Screens.Play
             if (LoadedBeatmapSuccessfully)
             {
                 // compare: https://github.com/ppy/osu/blob/ccf1acce56798497edfaf92d3ece933469edcf0a/osu.Game/Screens/Play/Player.cs#L848-L851
-                var scoreCopy = Score.DeepClone();
+                var scoreCopy = score.DeepClone();
 
                 Task.Run(async () =>
                 {
