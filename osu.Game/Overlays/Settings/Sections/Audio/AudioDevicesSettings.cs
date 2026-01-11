@@ -37,18 +37,6 @@ namespace osu.Game.Overlays.Settings.Sections.Audio
                 },
             };
 
-            if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows)
-            {
-                Add(wasapiExperimental = new SettingsCheckbox
-                {
-                    LabelText = AudioSettingsStrings.WasapiLabel,
-                    TooltipText = AudioSettingsStrings.WasapiTooltip,
-                    Current = audio.UseExperimentalWasapi,
-                    Keywords = new[] { "wasapi", "latency", "exclusive" }
-                });
-
-                wasapiExperimental.Current.ValueChanged += _ => onDeviceChanged(string.Empty);
-            }
 
             audio.OnNewDevice += onDeviceChanged;
             audio.OnLostDevice += onDeviceChanged;

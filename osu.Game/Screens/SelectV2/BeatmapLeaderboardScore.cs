@@ -316,8 +316,8 @@ namespace osu.Game.Screens.SelectV2
                                                 Child = statisticsContainer = new FillFlowContainer
                                                 {
                                                     Name = @"Statistics container",
-                                                    Padding = new MarginPadding { Right = 10 },
-                                                    Spacing = new Vector2(20, 0),
+                                                    Padding = new MarginPadding { Right = 12 },
+                                                    Spacing = new Vector2(8, 0),
                                                     Shear = sheared ? -OsuGame.SHEAR : Vector2.Zero,
                                                     Anchor = Anchor.CentreRight,
                                                     Origin = Anchor.CentreRight,
@@ -329,6 +329,7 @@ namespace osu.Game.Screens.SelectV2
                                                             Score.MaxCombo == Score.GetMaximumAchievableCombo(), 60),
                                                         new ScoreComponentLabel(BeatmapsetsStrings.ShowScoreboardHeadersAccuracy.ToUpper(), Score.DisplayAccuracy, Score.Accuracy == 1,
                                                             55),
+                                                        new ScoreComponentLabel(BeatmapLeaderboardWedgeStrings.PP.ToUpper(), Score.PP.HasValue ? $"{Score.PP:0}pp" : "--", false, 55),
                                                     },
                                                     Alpha = 0,
                                                 }

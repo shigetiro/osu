@@ -111,6 +111,7 @@ namespace osu.Game.Tests.Visual.OnlinePlay
                                 Rank = ScoreRank.S,
                                 MaxCombo = 1000,
                                 TotalScore = 1000000,
+                                TotalScoreWithoutMods = 1000000,
                                 User = new APIUser { Username = "best user" },
                                 Mods = [new APIMod { Acronym = @"DT" }],
                                 Statistics = new Dictionary<HitResult, int>()
@@ -125,6 +126,7 @@ namespace osu.Game.Tests.Visual.OnlinePlay
                                 Rank = ScoreRank.B,
                                 MaxCombo = 100,
                                 TotalScore = 200000,
+                                TotalScoreWithoutMods = 200000,
                                 User = new APIUser { Username = "worst user" },
                                 Mods = [new APIMod { Acronym = @"TD" }],
                                 Statistics = new Dictionary<HitResult, int>()
@@ -140,6 +142,7 @@ namespace osu.Game.Tests.Visual.OnlinePlay
                             Rank = ScoreRank.A,
                             MaxCombo = 100,
                             TotalScore = 800000,
+                            TotalScoreWithoutMods = 800000,
                             User = localUser,
                             Statistics = new Dictionary<HitResult, int>()
                         },
@@ -177,6 +180,7 @@ namespace osu.Game.Tests.Visual.OnlinePlay
                         Rank = ScoreRank.S,
                         MaxCombo = 1000,
                         TotalScore = 1000000,
+                        TotalScoreWithoutMods = 1000000,
                         User = localUser,
                         Statistics = new Dictionary<HitResult, int>()
                     });

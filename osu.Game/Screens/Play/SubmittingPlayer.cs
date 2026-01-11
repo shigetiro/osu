@@ -9,9 +9,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Sprites;
 using osu.Framework.Logging;
-using osu.Framework.Platform;
 using osu.Framework.Screens;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
@@ -21,9 +19,6 @@ using osu.Game.Online.API;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Rooms;
 using osu.Game.Online.Spectator;
-using osu.Game.Overlays;
-using osu.Game.Overlays.Notifications;
-using osu.Game.Rulesets;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Scoring;
 using osu.Game.Screens.Ranking;
@@ -35,8 +30,6 @@ namespace osu.Game.Screens.Play
     /// </summary>
     public abstract partial class SubmittingPlayer : Player
     {
-        private const string download_url = "https://github.com/GooGuTeam/custom-rulesets/releases/latest";
-
         /// <summary>
         /// The token to be used for the current submission. This is fetched via a request created by <see cref="CreateTokenRequest"/>.
         /// </summary>
@@ -57,15 +50,6 @@ namespace osu.Game.Screens.Play
 
         private readonly object scoreSubmissionLock = new object();
         private TaskCompletionSource<bool> scoreSubmissionSource;
-
-        [Resolved]
-        protected RulesetHashCache RulesetHashCache { get; private set; } = null!;
-
-        [Resolved]
-        protected INotificationOverlay Notifications { get; private set; } = null!;
-
-        [Resolved]
-        private GameHost host { get; set; } = null!;
 
         protected SubmittingPlayer(PlayerConfiguration configuration = null)
             : base(configuration)
@@ -145,16 +129,6 @@ namespace osu.Game.Screens.Play
 
             return true;
 
-            string extractDownloadUrlFromMessage(string message)
-            {
-                const string prefix = "Download at: ";
-                int startIndex = message.IndexOf(prefix, StringComparison.Ordinal);
-                if (startIndex != -1)
-                    return message.Substring(startIndex + prefix.Length).Trim();
-
-                return download_url;
-            }
-
             void handleTokenFailure(Exception exception, bool displayNotification = false)
             {
                 tcs.SetResult(false);
@@ -166,26 +140,6 @@ namespace osu.Game.Screens.Play
                     string whatWillHappen = shouldExit
                         ? "Play in this state is not permitted."
                         : "Your score will not be submitted.";
-
-                    bool notifyRulesetOutdated(string message)
-                    {
-                        if (message.StartsWith("Ruleset is outdated.", StringComparison.Ordinal))
-                        {
-                            Notifications.Post(new SimpleNotification
-                            {
-                                Text = $"{message}\n\n{whatWillHappen} Click to download the latest version.",
-                                Icon = FontAwesome.Solid.Download,
-                                Activated = () =>
-                                {
-                                    host.OpenUrlExternally(extractDownloadUrlFromMessage(message));
-                                    return true;
-                                }
-                            });
-                            return true;
-                        }
-
-                        return false;
-                    }
 
                     if (string.IsNullOrEmpty(exception.Message))
                         Logger.Error(exception, $"Failed to retrieve a score submission token.\n\n{whatWillHappen}");
@@ -208,9 +162,6 @@ namespace osu.Game.Screens.Play
                                 break;
 
                             default:
-                                if (notifyRulesetOutdated(exception.Message))
-                                    break;
-
                                 Logger.Log($"{whatWillHappen} {exception.Message}", level: LogLevel.Important);
                                 break;
                         }
@@ -265,12 +216,7 @@ namespace osu.Game.Screens.Play
         }
 
         [Resolved]
-        private RealmAccess realm
-
-        {
-            get;
-            set;
-        }
+        private RealmAccess realm { get; set; }
 
         protected override void StartGameplay()
         {
@@ -300,27 +246,26 @@ namespace osu.Game.Screens.Play
             return paused;
         }
 
-        protected override void OnFail()
+        protected override void ConcludeFailedScore(Score score)
         {
-            base.OnFail();
-
-            submitFromFailOrQuit();
+            base.ConcludeFailedScore(score);
+            submitFromFailOrQuit(score);
         }
 
         public override bool OnExiting(ScreenExitEvent e)
         {
             bool exiting = base.OnExiting(e);
-            submitFromFailOrQuit();
+            submitFromFailOrQuit(Score);
             statics.SetValue(Static.LastLocalUserScore, Score?.ScoreInfo.DeepClone());
             return exiting;
         }
 
-        private void submitFromFailOrQuit()
+        private void submitFromFailOrQuit(Score score)
         {
             if (LoadedBeatmapSuccessfully)
             {
                 // compare: https://github.com/ppy/osu/blob/ccf1acce56798497edfaf92d3ece933469edcf0a/osu.Game/Screens/Play/Player.cs#L848-L851
-                var scoreCopy = Score.DeepClone();
+                var scoreCopy = score.DeepClone();
 
                 Task.Run(async () =>
                 {

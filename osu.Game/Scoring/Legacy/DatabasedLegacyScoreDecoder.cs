@@ -23,7 +23,15 @@ namespace osu.Game.Scoring.Legacy
             this.beatmaps = beatmaps;
         }
 
-        protected override Ruleset GetRuleset(int rulesetId) => rulesets.GetRuleset(rulesetId)?.CreateInstance();
+        protected override Ruleset GetRuleset(int rulesetId)
+        {
+            // 215 is the legacy ID for the Space ruleset (727 % 256).
+            // We need to map it back to the OnlineID 727 to find the ruleset.
+            if (rulesetId == 215)
+                return rulesets.GetRuleset(727)?.CreateInstance();
+
+            return rulesets.GetRuleset(rulesetId)?.CreateInstance();
+        }
         protected override WorkingBeatmap GetBeatmap(string md5Hash) => beatmaps.GetWorkingBeatmap(beatmaps.QueryBeatmap(b => b.MD5Hash == md5Hash));
     }
 }

@@ -7,7 +7,11 @@ using osu.Framework.Extensions.LocalisationExtensions;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
+using osu.Game.Graphics;
+using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online;
 using osu.Game.Online.API.Requests.Responses;
@@ -27,9 +31,13 @@ namespace osu.Game.Users
         private const int padding = 10;
         private const int main_content_height = 80;
 
-        private GlobalRankDisplay globalRankDisplay = null!;
+        private ProfileValueDisplay globalRankDisplay = null!;
         private ProfileValueDisplay countryRankDisplay = null!;
+        private ProfileValueDisplay ppDisplay = null!;
+        private TotalPlayTime playtimeDisplay = null!;
         private LoadingLayer loadingLayer = null!;
+        private Container modIndicatorContainer = null!;
+        private OsuSpriteText modIndicatorText = null!;
 
         public UserRankPanel(APIUser user)
             : base(user)
@@ -50,6 +58,9 @@ namespace osu.Game.Users
         [Resolved]
         private IBindable<RulesetInfo> ruleset { get; set; } = null!;
 
+        [Resolved]
+        private UserStatisticsWatcher? userStatisticsWatcher { get; set; }
+
         protected override void LoadComplete()
         {
             base.LoadComplete();
@@ -57,28 +68,90 @@ namespace osu.Game.Users
             if (statisticsProvider != null)
                 statisticsProvider.StatisticsUpdated += onStatisticsUpdated;
 
-            ruleset.BindValueChanged(_ => updateDisplay(), true);
+            // Listen for score-based statistics updates for more immediate refresh after plays
+            if (userStatisticsWatcher != null)
+            {
+                userStatisticsWatcher.LatestUpdate.BindValueChanged(scoreUpdate =>
+                {
+                    if (scoreUpdate.NewValue != null)
+                    {
+                        // Refresh display when a score-based update is received
+                        updateDisplay();
+                    }
+                });
+            }
+
+            // Listen for ruleset changes and update display accordingly
+            ruleset.BindValueChanged(rulesetChanged =>
+            {
+                updateDisplay();
+
+                // If switching to a special ruleset that doesn't have statistics yet,
+                // try to fetch them from the API
+                if (IsSpecialRuleset(rulesetChanged.NewValue) && statisticsProvider?.GetStatisticsFor(rulesetChanged.NewValue) == null)
+                {
+                    statisticsProvider?.RefetchStatistics(rulesetChanged.NewValue);
+                }
+            }, true);
         }
 
         private void onStatisticsUpdated(UserStatisticsUpdate update)
         {
-            if (update.Ruleset.Equals(ruleset.Value))
-                updateDisplay();
+            // Update display for any ruleset update to ensure we catch all statistic changes
+            // This ensures stats refresh after every play regardless of current ruleset
+            updateDisplay();
         }
 
         private void updateDisplay()
         {
+            // Get statistics for the current ruleset
             var statistics = statisticsProvider?.GetStatisticsFor(ruleset.Value);
 
+            // If no statistics found for special ruleset, try to get from base ruleset
+            if (statistics == null && IsSpecialRuleset(ruleset.Value))
+            {
+                var baseRuleset = ruleset.Value.CreateNormalRuleset();
+                statistics = statisticsProvider?.GetStatisticsFor(baseRuleset);
+            }
+
             loadingLayer.State.Value = statistics == null ? Visibility.Visible : Visibility.Hidden;
+            globalRankDisplay.Content = statistics?.GlobalRank?.ToLocalisableString("\\##,##0") ?? "-";
+            countryRankDisplay.Content = statistics?.CountryRank?.ToLocalisableString("\\##,##0") ?? "-";
+            ppDisplay.Content = statistics?.PP?.ToLocalisableString("#,##0") ?? "0";
+            playtimeDisplay.UserStatistics.Value = statistics;
 
-            // TODO: implement highest rank tooltip
-            // `RankHighest` resides in `APIUser`, but `api.LocalUser` doesn't update
-            // maybe move to `UserStatistics` in api, so `UserStatisticsWatcher` can update the value
-            globalRankDisplay.UserStatistics.Value = statistics;
-
-            countryRankDisplay.Content.Text = statistics?.CountryRank?.ToLocalisableString("\\##,##0") ?? "-";
+            // Update mod indicator for special rulesets (Relax/Autopilot)
+            string? modName = GetModNameForRuleset(ruleset.Value);
+            if (modName != null)
+            {
+                modIndicatorText.Text = modName;
+                modIndicatorContainer.Show();
+            }
+            else
+            {
+                modIndicatorContainer.Hide();
+            }
         }
+
+        /// <summary>
+        /// Gets the mod name for a special ruleset (Relax/Autopilot), or null if not a special ruleset.
+        /// </summary>
+        private static string? GetModNameForRuleset(RulesetInfo ruleset)
+        {
+            return ruleset.ShortName switch
+            {
+                RulesetInfo.OSU_RELAX_MODE_SHORTNAME => "Relax",
+                RulesetInfo.OSU_AUTOPILOT_MODE_SHORTNAME => "Autopilot",
+                RulesetInfo.TAIKO_RELAX_MODE_SHORTNAME => "Relax",
+                RulesetInfo.CATCH_RELAX_MODE_SHORTNAME => "Relax",
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// Determines if the current ruleset is a special mode (Relax/Autopilot).
+        /// </summary>
+        private static bool IsSpecialRuleset(RulesetInfo ruleset) => GetModNameForRuleset(ruleset) != null;
 
         protected override Drawable CreateLayout()
         {
@@ -152,10 +225,31 @@ namespace osu.Game.Users
                                                         AutoSizeAxes = Axes.Both,
                                                         Direction = FillDirection.Horizontal,
                                                         Spacing = new Vector2(6),
-                                                        Children = new[]
+                                                        Children = new Drawable[]
                                                         {
                                                             CreateFlag(),
-                                                            CreateTeamLogo(),
+                                                            modIndicatorContainer = new Container
+                                                            {
+                                                                AutoSizeAxes = Axes.Both,
+                                                                Masking = true,
+                                                                CornerRadius = 4,
+                                                                Alpha = 0,
+                                                                AlwaysPresent = false,
+                                                                Children = new Drawable[]
+                                                                {
+                                                                    new Box
+                                                                    {
+                                                                        RelativeSizeAxes = Axes.Both,
+                                                                        Colour = ColourProvider?.Light1 ?? Colours.GreyVioletLighter
+                                                                    },
+                                                                    modIndicatorText = new OsuSpriteText
+                                                                    {
+                                                                        Font = OsuFont.GetFont(size: 10, weight: FontWeight.Bold),
+                                                                        Padding = new MarginPadding { Horizontal = 6, Vertical = 2 },
+                                                                        Colour = ColourProvider?.Content1 ?? Colours.GreyVioletLight
+                                                                    }
+                                                                }
+                                                            },
                                                             // supporter icon is being added later
                                                         }
                                                     }
@@ -187,16 +281,31 @@ namespace osu.Game.Users
                             new Dimension(),
                             new Dimension()
                         },
-                        RowDimensions = new[] { new Dimension(GridSizeMode.AutoSize) },
+                        RowDimensions = new[] { new Dimension(GridSizeMode.AutoSize), new Dimension(GridSizeMode.AutoSize) },
                         Content = new[]
                         {
                             new Drawable[]
                             {
-                                globalRankDisplay = new GlobalRankDisplay(),
+                                globalRankDisplay = new ProfileValueDisplay(true)
+                                {
+                                    Title = UsersStrings.ShowRankGlobalSimple,
+                                    Margin = new MarginPadding { Bottom = padding }
+                                    // TODO: implement highest rank tooltip
+                                    // `RankHighest` resides in `APIUser`, but `api.LocalUser` doesn't update
+                                    // maybe move to `UserStatistics` in api, so `UserStatisticsWatcher` can update the value
+                                },
                                 countryRankDisplay = new ProfileValueDisplay(true)
                                 {
-                                    Title = UsersStrings.ShowRankCountrySimple,
+                                    Title = UsersStrings.ShowRankCountrySimple
                                 }
+                            },
+                            new Drawable[]
+                            {
+                                ppDisplay = new ProfileValueDisplay
+                                {
+                                    Title = "pp"
+                                },
+                                playtimeDisplay = new TotalPlayTime()
                             }
                         }
                     },
@@ -234,6 +343,9 @@ namespace osu.Game.Users
         {
             if (statisticsProvider.IsNotNull())
                 statisticsProvider.StatisticsUpdated -= onStatisticsUpdated;
+
+            if (userStatisticsWatcher != null)
+                userStatisticsWatcher.LatestUpdate.UnbindAll();
 
             base.Dispose(isDisposing);
         }

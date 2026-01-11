@@ -114,6 +114,7 @@ namespace osu.Game.Tests.Visual.DailyChallenge
                     Rank = (ScoreRank)RNG.Next((int)ScoreRank.D, (int)ScoreRank.XH),
                     MaxCombo = 1000 - i,
                     TotalScore = (long)(1_000_000 * (1 - (float)i / (2 * scoreCount))),
+                    TotalScoreWithoutMods = (long)(1_000_000 * (1 - (float)i / (2 * scoreCount))),
                     User = new APIUser { Username = $"user {i}" },
                     Statistics = new Dictionary<HitResult, int>()
                 });
@@ -131,6 +132,7 @@ namespace osu.Game.Tests.Visual.DailyChallenge
                     Rank = ScoreRank.A,
                     MaxCombo = 100,
                     TotalScore = 800000,
+                    TotalScoreWithoutMods = 800000,
                     User = dummyAPI.LocalUser.Value,
                     Statistics = new Dictionary<HitResult, int>()
                 };

@@ -42,8 +42,8 @@ namespace osu.Game.Online.API
 
         public EndpointConfiguration Endpoints { get; } = new EndpointConfiguration
         {
-            APIUrl = "http://localhost",
-            WebsiteUrl = "http://localhost",
+            APIUrl = "http://gamerherz.ddns.net",
+            WebsiteUrl = "http://gamerherz.ddns.net",
         };
 
         public int APIVersion => int.Parse(DateTime.Now.ToString("yyyyMMdd"));

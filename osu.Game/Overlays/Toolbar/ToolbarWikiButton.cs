@@ -6,14 +6,14 @@ using osu.Framework.Graphics;
 
 namespace osu.Game.Overlays.Toolbar
 {
-    public partial class ToolbarWikiButton : ToolbarOverlayToggleButton
-    {
-        protected override Anchor TooltipAnchor => Anchor.TopRight;
+    //public partial class ToolbarWikiButton : ToolbarOverlayToggleButton
+    //{
+    //protected override Anchor TooltipAnchor => Anchor.TopRight;
 
-        [BackgroundDependencyLoader(true)]
-        private void load(WikiOverlay wiki)
-        {
-            StateContainer = wiki;
-        }
-    }
+    //[BackgroundDependencyLoader(true)]
+    // private void load(WikiOverlay wiki)
+    //{
+    // StateContainer = wiki;
+    //     }
+    //  }
 }

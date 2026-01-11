@@ -44,6 +44,8 @@ namespace osu.Game.Screens.SelectV2
 
         private IBindable<StarDifficulty>? starDifficultyBindable;
         private CancellationTokenSource? starDifficultyCancellationSource;
+        private double starRatingCalculationDebounce;
+        private bool starRatingCalculationQueued;
 
         private Box backgroundBorder = null!;
         private Box backgroundDifficultyTint = null!;
@@ -214,7 +216,9 @@ namespace osu.Game.Screens.SelectV2
             difficultyText.Text = beatmap.DifficultyName;
             authorText.Text = BeatmapsetsStrings.ShowDetailsMappedBy(beatmap.Metadata.Author.Username);
 
-            computeStarRating();
+            // Defer star rating calculation until panel is visible to reduce overhead during scrolling
+            starRatingCalculationQueued = true;
+            starRatingCalculationDebounce = 0;
             updateKeyCount();
         }
 
@@ -262,6 +266,19 @@ namespace osu.Game.Screens.SelectV2
             {
                 starDifficultyCancellationSource?.Cancel();
                 starDifficultyCancellationSource = null;
+                starRatingCalculationQueued = false;
+                starRatingCalculationDebounce = 0;
+            }
+            else if (starRatingCalculationQueued)
+            {
+                // Defer star rating calculation until panel has been visible for a short time
+                // This reduces overhead during rapid scrolling with large libraries
+                starRatingCalculationDebounce += Clock.ElapsedFrameTime;
+                if (starRatingCalculationDebounce >= SongSelect.DIFFICULTY_CALCULATION_DEBOUNCE)
+                {
+                    computeStarRating();
+                    starRatingCalculationQueued = false;
+                }
             }
 
             // Dirty hack to make sure we don't take up spacing in parent fill flow when not displaying a rank.

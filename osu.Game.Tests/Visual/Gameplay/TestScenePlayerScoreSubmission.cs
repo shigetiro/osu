@@ -411,6 +411,7 @@ namespace osu.Game.Tests.Visual.Gameplay
                                     User = dummyAPI.LocalUser.Value,
                                     Rank = requestScore.Rank,
                                     TotalScore = requestScore.TotalScore,
+                                    TotalScoreWithoutMods = requestScore.TotalScore,
                                     Accuracy = requestScore.Accuracy,
                                     MaxCombo = requestScore.MaxCombo,
                                     Mods = requestScore.Mods,

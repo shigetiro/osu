@@ -83,6 +83,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                                     Rank = (ScoreRank)RNG.Next((int)ScoreRank.D, (int)ScoreRank.XH),
                                     MaxCombo = 1000 - i,
                                     TotalScore = (long)(1_000_000 * (1 - (float)i / 16)),
+                                    TotalScoreWithoutMods = (long)(1_000_000 * (1 - (float)i / 16)),
                                     User = new APIUser { Username = $"user {i}" },
                                     Statistics = new Dictionary<HitResult, int>()
                                 });

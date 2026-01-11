@@ -274,6 +274,14 @@ namespace osu.Game.Graphics.UserInterface
 
         private ColourInfo getColour(double performanceRatio)
         {
+            // Handle unlimited FPS mode (when aim FPS is extremely high)
+            // In unlimited mode, we want to show a neutral color instead of red
+            if (aimDrawFPS > 10000 || aimUpdateFPS > 10000)
+            {
+                // Use a neutral blue color for unlimited mode
+                return colours.Blue0;
+            }
+
             if (performanceRatio < 0.5f)
                 return Interpolation.ValueAt(performanceRatio, colours.Red, colours.Orange2, 0, 0.5);
 

@@ -46,7 +46,12 @@ namespace osu.Game.Scoring.Legacy
 
             using (SerializationReader sr = new SerializationReader(stream))
             {
-                currentRuleset = GetRuleset(sr.ReadByte());
+                int rulesetId = sr.ReadByte();
+                currentRuleset = GetRuleset(rulesetId);
+
+                if (currentRuleset == null)
+                    throw new ArgumentException($"Ruleset with ID {rulesetId} not found during legacy score decode.");
+
                 var scoreInfo = new ScoreInfo { Ruleset = currentRuleset.RulesetInfo };
 
                 score.ScoreInfo = scoreInfo;
@@ -127,6 +132,9 @@ namespace osu.Game.Scoring.Legacy
                     readCompressedData(compressedScoreInfo, reader =>
                     {
                         LegacyReplaySoloScoreInfo readScore = JsonConvert.DeserializeObject<LegacyReplaySoloScoreInfo>(reader.ReadToEnd());
+
+                        if (readScore == null)
+                            return;
 
                         Debug.Assert(readScore != null);
 

@@ -1,4 +1,4 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
@@ -87,7 +87,19 @@ namespace osu.Game.Screens.Play.HUD.HitErrorMeters
             const int bar_width = 2;
             const float chevron_size = 8;
 
-            hitWindows = HitWindows.GetAllAvailableWindows().Where(w => w.result.IsHit()).ToArray();
+            hitWindows = HitWindows.GetAllAvailableWindows().Where(w => w.result.IsHit() && w.length > 0).ToArray();
+
+            // If no valid hit windows are available, use fallback windows for visualization
+            if (hitWindows.Length == 0)
+            {
+                hitWindows = new[]
+                {
+                    (HitResult.Meh, 79.5),
+                    (HitResult.Ok, 49.5),
+                    (HitResult.Great, 19.5),
+                    (HitResult.Perfect, 0.0)
+                }.Where(w => w.Item2 > 0).ToArray();
+            }
 
             InternalChild = new Container
             {
@@ -341,12 +353,35 @@ namespace osu.Game.Screens.Play.HUD.HitErrorMeters
 
         private void createColourBars((HitResult result, double length)[] windows)
         {
+            // Handle empty windows array or windows with zero length
+            if (windows.Length == 0)
+            {
+                // Fallback to default hit windows for visualization
+                var fallbackWindows = new[]
+                {
+                    (HitResult.Meh, 79.5),
+                    (HitResult.Ok, 49.5),
+                    (HitResult.Great, 19.5),
+                    (HitResult.Perfect, 0.0)
+                }.Where(w => w.Item2 > 0).ToArray();
+
+                if (fallbackWindows.Length > 0)
+                {
+                    createColourBars(fallbackWindows);
+                    return;
+                }
+            }
+
             // max to avoid div-by-zero.
-            maxHitWindow = Math.Max(1, windows.First().length);
+            maxHitWindow = Math.Max(1, windows.FirstOrDefault().length);
 
             for (int i = 0; i < windows.Length; i++)
             {
                 (var result, double length) = windows[i];
+
+                // Skip windows with zero length to avoid division issues
+                if (length <= 0)
+                    continue;
 
                 float hitWindow = (float)(length / maxHitWindow);
 
@@ -398,6 +433,23 @@ namespace osu.Game.Screens.Play.HUD.HitErrorMeters
         protected override void OnNewJudgement(JudgementResult judgement)
         {
             const int arrow_move_duration = 800;
+
+            // Lazily ensure colour bars are created with actual hit windows once available.
+            // When this component loads before hit objects, `HitWindows` may be empty and initial bars missing.
+            if ((colourBarsEarly.Count == 0 || colourBarsLate.Count == 0) && HitWindows != null)
+            {
+                hitWindows = HitWindows.GetAllAvailableWindows().Where(w => w.result.IsHit() && w.length > 0).ToArray();
+
+                // Only recreate bars if we have valid hit windows
+                if (hitWindows.Length > 0)
+                {
+                    colourBarsEarly.Clear(false);
+                    colourBarsLate.Clear(false);
+                    createColourBars(hitWindows);
+                    colourBarsEarly.FadeInFromZero(0);
+                    colourBarsLate.FadeInFromZero(0);
+                }
+            }
 
             if (!judgement.IsHit || judgement.HitObject.HitWindows?.WindowFor(HitResult.Miss) == 0)
                 return;

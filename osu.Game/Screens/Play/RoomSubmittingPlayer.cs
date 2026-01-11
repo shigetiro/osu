@@ -42,7 +42,7 @@ namespace osu.Game.Screens.Play
             if (!Ruleset.Value.IsLegacyRuleset())
                 return null;
 
-            return new CreateRoomScoreRequest(roomId, PlaylistItem.ID, Beatmap.Value.BeatmapInfo, rulesetId, Game.VersionHash, RulesetHashCache?.GetHash(Ruleset.Value));
+            return new CreateRoomScoreRequest(roomId, PlaylistItem.ID, Beatmap.Value.BeatmapInfo, rulesetId, Game.VersionHash);
         }
 
         protected override APIRequest<MultiplayerScore> CreateSubmissionRequest(Score score, long token)

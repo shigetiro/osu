@@ -162,7 +162,8 @@ namespace osu.Game.Screens.Spectate
             var user = userMap[userId];
             var spectatorState = userStates[userId];
 
-            var resolvedRuleset = rulesets.AvailableRulesets.FirstOrDefault(r => r.OnlineID == spectatorState.RulesetID)?.CreateInstance();
+            var rulesetId = spectatorState.RulesetID == 215 ? 727 : spectatorState.RulesetID;
+            var resolvedRuleset = rulesets.AvailableRulesets.FirstOrDefault(r => r.OnlineID == rulesetId)?.CreateInstance();
             if (resolvedRuleset == null)
                 return;
 

@@ -71,7 +71,7 @@ namespace osu.Game.Tests.Visual.DailyChallenge
 
                 breakdown.AddNewScore(ev);
             });
-            AddStep("set user score", () => breakdown.UserBestScore.Value = new MultiplayerScore { TotalScore = RNG.Next(1_000_000) });
+            AddStep("set user score", () => breakdown.UserBestScore.Value = new MultiplayerScore { TotalScore = RNG.Next(1_000_000), TotalScoreWithoutMods = RNG.Next(1_000_000) });
             AddStep("unset user score", () => breakdown.UserBestScore.Value = null);
         }
 

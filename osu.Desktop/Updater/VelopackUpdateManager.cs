@@ -67,7 +67,7 @@ namespace osu.Desktop.Updater
             try
             {
                 // Use GU repository instead of official osu repository
-                IUpdateSource updateSource = new GithubSource(@"https://github.com/GooGuTeam/osu", null, ReleaseStream.Value == Game.Configuration.ReleaseStream.Tachyon);
+                IUpdateSource updateSource = new GithubSource(@"https://github.com/shigetiro/osu", null, ReleaseStream.Value == Game.Configuration.ReleaseStream.Tachyon);
                 Velopack.UpdateManager updateManager = new Velopack.UpdateManager(updateSource, new UpdateOptions
                 {
                     AllowVersionDowngrade = true

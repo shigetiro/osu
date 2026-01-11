@@ -9,7 +9,15 @@ namespace osu.Game.Users
     {
         public string Name { get; set; }
         public string InternalName { get; set; }
-        public string ImageUrl => $@"https://s.ppy.sh/images/medals-client/{InternalName}@2x.png";
+        /// <summary>
+        /// Local resource path for the medal texture. Falls back to URL if local resource is not found.
+        /// TextureStore automatically prepends "Textures/" when looking for resources.
+        /// </summary>
+        public string ImageUrl => $@"Medals/{InternalName}@2x.png";
+        /// <summary>
+        /// Fallback URL for medal texture if local resource is not available.
+        /// </summary>
+        public string ImageUrlFallback => $@"Textures/Medals/{InternalName}@2x.png";
         public string Description { get; set; }
     }
 }

@@ -67,7 +67,9 @@ namespace osu.Game.Overlays.Dashboard.Friends
 
             foreach (var user in apiFriends)
             {
-                if (friendPresences.ContainsKey(user.TargetID))
+                // Use metadataClient.GetPresence to perform a canonical presence lookup, matching the filtering logic.
+                // This ensures the counts correctly reflect online vs offline (including friend presences, user presences, and local user).
+                if (metadataClient.GetPresence(user.TargetID) != null)
                     countOnline.Value++;
                 else
                     countOffline.Value++;

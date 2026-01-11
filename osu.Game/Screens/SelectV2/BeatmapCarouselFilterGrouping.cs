@@ -408,7 +408,8 @@ namespace osu.Game.Screens.SelectV2
             // this is a pre-built mapping of MD5s to a list of collections in which this MD5 is found in.
             // the reason to pre-build this is that `BeatmapCollection.BeatmapMD5Hashes` is a list and therefore a naive implementation would be slow,
             // particularly in edge cases where most beatmaps are in more than one collection.
-            Dictionary<string, List<GroupDefinition>> md5ToCollectionsMap = new Dictionary<string, List<GroupDefinition>>();
+            // Pre-allocate dictionary capacity for better performance with large libraries (65k+ songs)
+            Dictionary<string, List<GroupDefinition>> md5ToCollectionsMap = new Dictionary<string, List<GroupDefinition>>(carouselItems.Count);
 
             for (int i = 0; i < allCollections.Count; i++)
             {

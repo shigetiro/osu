@@ -47,10 +47,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
             this.MoveTo(Vector2.Zero, 1000, Easing.OutExpo)
                 .ScaleTo(1.5f, 1000, Easing.OutExpo);
 
-            content.Dice.MoveToY(-200, duration * 0.55, new CubicBezierEasingFunction(0.33, 1, 0.8, 1))
+            content.Dice.MoveToY(-200, duration * 0.55, Easing.OutCubic)
                    .Then()
                    .Schedule(() => ChangeInternalChildDepth(diceProxy, float.MaxValue))
-                   .MoveToY(-DrawHeight / 2, duration * 0.45, new CubicBezierEasingFunction(0.2, 0, 0.55, 0))
+                   .MoveToY(-DrawHeight / 2, duration * 0.45, Easing.InCubic)
                    .Then()
                    .FadeOut()
                    .Expire();

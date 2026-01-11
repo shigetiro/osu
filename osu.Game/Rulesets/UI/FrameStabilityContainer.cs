@@ -309,6 +309,8 @@ namespace osu.Game.Rulesets.UI
         IBindable<bool> IFrameStableClock.IsCatchingUp => isCatchingUp;
         IBindable<bool> IFrameStableClock.WaitingOnFrames => waitingOnFrames;
 
+        public bool AllowBackwardsSeeks { get; internal set; }
+
         #endregion
 
         private enum PlaybackState

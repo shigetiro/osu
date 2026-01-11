@@ -96,8 +96,10 @@ namespace osu.Game.Screens.SelectV2
 
         public BeatmapCarousel()
         {
-            DebounceDelay = 100;
-            DistanceOffscreenToPreload = 100;
+            // Increased debounce delay to reduce filter frequency for large libraries (65k+ songs)
+            DebounceDelay = 200;
+            // Reduced preload distance to minimize panel creation overhead
+            DistanceOffscreenToPreload = 50;
 
             // Account for the osu! logo being in the way.
             Scroll.ScrollbarPaddingBottom = 70;
@@ -890,10 +892,11 @@ namespace osu.Game.Screens.SelectV2
 
         #region Drawable pooling
 
-        private readonly DrawablePool<PanelBeatmap> beatmapPanelPool = new DrawablePool<PanelBeatmap>(100);
-        private readonly DrawablePool<PanelBeatmapStandalone> standalonePanelPool = new DrawablePool<PanelBeatmapStandalone>(100);
-        private readonly DrawablePool<PanelBeatmapSet> setPanelPool = new DrawablePool<PanelBeatmapSet>(100);
-        private readonly DrawablePool<PanelGroup> groupPanelPool = new DrawablePool<PanelGroup>(100);
+        // Increased pool sizes for better reuse with large libraries (65k+ songs)
+        private readonly DrawablePool<PanelBeatmap> beatmapPanelPool = new DrawablePool<PanelBeatmap>(200);
+        private readonly DrawablePool<PanelBeatmapStandalone> standalonePanelPool = new DrawablePool<PanelBeatmapStandalone>(200);
+        private readonly DrawablePool<PanelBeatmapSet> setPanelPool = new DrawablePool<PanelBeatmapSet>(150);
+        private readonly DrawablePool<PanelGroup> groupPanelPool = new DrawablePool<PanelGroup>(150);
         private readonly DrawablePool<PanelGroupStarDifficulty> starsGroupPanelPool = new DrawablePool<PanelGroupStarDifficulty>(11);
         private readonly DrawablePool<PanelGroupRankDisplay> ranksGroupPanelPool = new DrawablePool<PanelGroupRankDisplay>(9);
         private readonly DrawablePool<PanelGroupRankedStatus> statusGroupPanelPool = new DrawablePool<PanelGroupRankedStatus>(8);

@@ -13,7 +13,7 @@ namespace osu.Game.Rulesets.Mods
 
         public override string Acronym => "CL";
 
-        public override double ScoreMultiplier => 0.96;
+        public override double ScoreMultiplier => 1;
 
         public override IconUsage? Icon => OsuIcon.ModClassic;
 
@@ -30,8 +30,8 @@ namespace osu.Game.Rulesets.Mods
         ///  - Hit windows differ (https://github.com/ppy/osu/issues/11311).
         ///  - Sliders always gives combo for slider end, even on miss (https://github.com/ppy/osu/issues/11769).
         /// </summary>
-        public sealed override bool Ranked => false;
+        public sealed override bool Ranked => true;
 
-        public sealed override bool ValidForFreestyleAsRequiredMod => false;
+        public sealed override bool ValidForFreestyleAsRequiredMod => true;
     }
 }

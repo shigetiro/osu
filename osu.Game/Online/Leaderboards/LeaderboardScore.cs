@@ -23,6 +23,7 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Localisation;
 using osu.Game.Overlays;
 using osu.Game.Rulesets.UI;
 using osu.Game.Screens.Select;
@@ -326,7 +327,8 @@ namespace osu.Game.Online.Leaderboards
         protected virtual IEnumerable<LeaderboardScoreStatistic> GetStatistics(ScoreInfo model) => new[]
         {
             new LeaderboardScoreStatistic(FontAwesome.Solid.Link, BeatmapsetsStrings.ShowScoreboardHeadersCombo, model.MaxCombo.ToString()),
-            new LeaderboardScoreStatistic(FontAwesome.Solid.Crosshairs, BeatmapsetsStrings.ShowScoreboardHeadersAccuracy, model.DisplayAccuracy)
+            new LeaderboardScoreStatistic(FontAwesome.Solid.Crosshairs, BeatmapsetsStrings.ShowScoreboardHeadersAccuracy, model.DisplayAccuracy),
+            new LeaderboardScoreStatistic(FontAwesome.Solid.Bolt, BeatmapLeaderboardWedgeStrings.PP, model.PP.HasValue ? $"{model.PP:0.#}pp" : "--"),
         };
 
         protected override bool OnHover(HoverEvent e)

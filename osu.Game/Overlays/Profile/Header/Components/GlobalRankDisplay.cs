@@ -44,19 +44,19 @@ namespace osu.Game.Overlays.Profile.Header.Components
         {
             base.LoadComplete();
 
-            UserStatistics.BindValueChanged(_ => updateState());
-            HighestRank.BindValueChanged(_ => updateState(), true);
+            // UserStatistics.BindValueChanged(_ => updateState());
+            // HighestRank.BindValueChanged(_ => updateState(), true);
         }
 
-        private void updateState()
-        {
-            info.Content.Text = UserStatistics.Value?.GlobalRank?.ToLocalisableString("\\##,##0") ?? (LocalisableString)"-";
-            info.Content.TooltipText = getGlobalRankTooltipText();
-
-            var tier = getRankingTier();
-            info.Content.Colour = tier == null ? colourProvider.Content2 : OsuColour.ForRankingTier(tier.Value);
-            info.Content.Font = info.Content.Font.With(weight: tier == null || tier == RankingTier.Iron ? FontWeight.Regular : FontWeight.Bold);
-        }
+        //private void updateState()
+        //      {
+        //     info.Content.Text = UserStatistics.Value?.GlobalRank?.ToLocalisableString("\\##,##0") ?? (LocalisableString)"-";
+        //     info.Content.TooltipText = getGlobalRankTooltipText();
+        //
+        //      var tier = getRankingTier();
+        //info.Content.Colour = tier == null ? colourProvider.Content2 : OsuColour.ForRankingTier(tier.Value);
+        //info.Content.Font = info.Content.Font.With(weight: tier == null || tier == RankingTier.Iron ? FontWeight.Regular : FontWeight.Bold);
+        // }
 
         /// <seealso href="https://github.com/ppy/osu-web/blob/6fcd85eb006ce7699d6f747597435c01344b2d2d/resources/js/profile-page/rank.tsx#L19-L46"/>
         private RankingTier? getRankingTier()

@@ -22,5 +22,8 @@ namespace osu.Game.Screens.Select.Leaderboards
 
         [LocalisableDescription(typeof(BeatmapLeaderboardWedgeStrings), nameof(BeatmapLeaderboardWedgeStrings.Date))]
         Date,
+
+        [LocalisableDescription(typeof(BeatmapLeaderboardWedgeStrings), nameof(BeatmapLeaderboardWedgeStrings.PP))]
+        PP,
     }
 }

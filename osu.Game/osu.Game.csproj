@@ -8,15 +8,15 @@
 Orginal code from: https://github.com/ppy/osu
 Modified by GooGuTeam</Description>
     <Copyright>Copyright (c) 2025 ppy Pty Ltd, GooGuTeam</Copyright>
-    <PackageProjectUrl>https://github.com/GooGuTeam/osu</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/GooGuTeam/osu</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/shigetiro/osu</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/shigetiro/osu</RepositoryUrl>
     <PackageReleaseNotes>Orginal Copyright: Copyright (c) 2025 ppy Pty Ltd
 Modified by GooGuTeam</PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup Label="Nuget">
     <Title>osu!</Title>
     <PackageId>g0v0.osu.Game</PackageId>
-    <Version>2025.1122.0</Version>
+    <Version>2025.1130.0</Version>
     <PackageIcon>icon.png</PackageIcon>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
@@ -31,6 +31,7 @@ Modified by GooGuTeam</PackageReleaseNotes>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.72" />
     <PackageReference Include="Humanizer" Version="2.14.1" />
+    <PackageReference Include="Humanizer.Core" Version="2.14.1" />
     <PackageReference Include="MessagePack" Version="3.1.3" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="9.0.2" />
@@ -44,8 +45,6 @@ Modified by GooGuTeam</PackageReleaseNotes>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Realm" Version="20.1.0" />
-    <PackageReference Include="ppy.osu.Framework" Version="2025.1121.1" />
-    <PackageReference Include="ppy.osu.Game.Resources" Version="2025.1116.0" />
     <PackageReference Include="Sentry" Version="5.1.1" />
     <!-- Held back due to 0.34.0 failing AOT compilation on ZstdSharp.dll dependency. -->
     <PackageReference Include="SharpCompress" Version="0.39.0" />
@@ -58,5 +57,10 @@ Modified by GooGuTeam</PackageReleaseNotes>
     <PackageReference Include="System.IO.FileSystem.Primitives" Version="4.3.0" />
     <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
     <PackageReference Include="System.Runtime.Handles" Version="4.3.0" />
+    <PackageReference Include="Uno.UI" Version="5.6.99" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\osu-framework\osu.Framework\osu.Framework.csproj" />
+    <ProjectReference Include="..\..\osu-resources\osu.Game.Resources\osu.Game.Resources.csproj" />
   </ItemGroup>
 </Project>

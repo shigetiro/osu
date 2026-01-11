@@ -69,6 +69,11 @@ namespace osu.Game.Localisation
         /// </summary>
         public static LocalisableString Date => new TranslatableString(getKey(@"date"), @"Date");
 
+        /// <summary>
+        /// "PP"
+        /// </summary>
+        public static LocalisableString PP => new TranslatableString(getKey(@"pp"), @"PP");
+
         private static string getKey(string key) => $@"{prefix}:{key}";
     }
 }

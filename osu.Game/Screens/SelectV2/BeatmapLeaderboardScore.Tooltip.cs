@@ -310,7 +310,7 @@ namespace osu.Game.Screens.SelectV2
                     ValueText.Text = LocalisableString.Interpolate(@$"{ppValue:N0}pp");
 
                     if (!scoreInfo.BeatmapInfo!.Status.GrantsPerformancePoints() || hasUnrankedMods(scoreInfo))
-                        Alpha = 0.5f;
+                        Alpha = 1f;
                     else
                         Alpha = 1f;
                 }

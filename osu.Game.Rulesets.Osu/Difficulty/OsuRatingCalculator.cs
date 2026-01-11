@@ -84,8 +84,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         public double ComputeSpeedRating(double speedDifficultyValue)
         {
-            if (mods.Any(m => m is OsuModRelax))
-                return 0;
 
             double speedRating = CalculateDifficultyRating(speedDifficultyValue);
 

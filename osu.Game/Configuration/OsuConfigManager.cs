@@ -91,7 +91,7 @@ namespace osu.Game.Configuration
                 }
             };
 
-            SetDefault(OsuSetting.CustomApiUrl, string.Empty);
+            SetDefault(OsuSetting.CustomApiUrl, "gamerherz.ddns.net");
 
             SetDefault(OsuSetting.ExternalLinkWarning, true);
             SetDefault(OsuSetting.PreferNoVideo, false);
@@ -127,6 +127,7 @@ namespace osu.Game.Configuration
 
             // Graphics
             SetDefault(OsuSetting.ShowFpsDisplay, false);
+            SetDefault(OsuSetting.AllowBenchmarkUnlimitedFrameLimiter, false);
 
             SetDefault(OsuSetting.ShowStoryboard, true);
             SetDefault(OsuSetting.BeatmapSkins, true);
@@ -152,6 +153,7 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.HUDVisibilityMode, HUDVisibilityMode.Always);
             SetDefault(OsuSetting.ShowHealthDisplayWhenCantFail, true);
             SetDefault(OsuSetting.FadePlayfieldWhenHealthLow, true);
+            SetDefault(OsuSetting.KeepGameplayAfterFailed, false);
             SetDefault(OsuSetting.KeyOverlay, false);
             SetDefault(OsuSetting.ReplaySettingsOverlay, true);
             SetDefault(OsuSetting.ReplayPlaybackControlsExpanded, true);
@@ -373,6 +375,7 @@ namespace osu.Game.Configuration
 
         ShowHealthDisplayWhenCantFail,
         FadePlayfieldWhenHealthLow,
+        KeepGameplayAfterFailed,
 
         /// <summary>
         /// Disables mouse buttons clicks during gameplay.
@@ -501,7 +504,7 @@ namespace osu.Game.Configuration
         /// <summary>
         /// Disables automatic updates for the GU version.
         /// </summary>
-        DisableAutomaticUpdates
-
+        DisableAutomaticUpdates,
+        AllowBenchmarkUnlimitedFrameLimiter
     }
 }

@@ -30,6 +30,16 @@ namespace osu.Game.Localisation
         public static LocalisableString FrameLimiter => new TranslatableString(getKey(@"frame_limiter"), @"Frame limiter");
 
         /// <summary>
+        /// "Remove 1000fps limit on 'Unlimited'"
+        /// </summary>
+        public static LocalisableString UnlockUnlimitedFrameLimiter => new TranslatableString(getKey(@"unlock_unlimited_frame_limiter"), @"Remove 1000fps limit on 'Unlimited'");
+
+        /// <summary>
+        /// "Allows the unlimited frame limiter to run without restrictions. May increase power usage."
+        /// </summary>
+        public static LocalisableString UnlockUnlimitedFrameLimiterDescription => new TranslatableString(getKey(@"unlock_unlimited_frame_limiter_description"), @"Allows the unlimited frame limiter to run without restrictions. May increase power usage.");
+
+        /// <summary>
         /// "Threading mode"
         /// </summary>
         public static LocalisableString ThreadingMode => new TranslatableString(getKey(@"threading_mode"), @"Threading mode");

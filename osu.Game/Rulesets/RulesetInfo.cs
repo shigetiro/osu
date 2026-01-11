@@ -2,8 +2,12 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Linq;
 using JetBrains.Annotations;
+using osu.Game.Extensions;
 using osu.Game.Rulesets.Difficulty;
+using osu.Game.Rulesets.Mods;
+using osu.Game.Scoring;
 using Realms;
 
 namespace osu.Game.Rulesets
@@ -140,6 +144,20 @@ namespace osu.Game.Rulesets
             newRuleset.ShortName = newShortName;
             newRuleset.Name = $"{newRuleset.Name} ({suffix})";
             return newRuleset;
+        }
+
+        public RulesetInfo? CreateSpecialRulesetByScore(ScoreInfo score)
+        {
+            if (!score.Ruleset.HasSpecialRuleset()) { return null; }
+
+            return score.Ruleset.ShortName switch
+            {
+                OSU_MODE_SHORTNAME when score.Mods.OfType<ModRelax>().Any() => CreateSpecialRuleset(OSU_RELAX_MODE_SHORTNAME, OSU_RELAX_ONLINE_ID),
+                OSU_MODE_SHORTNAME when score.APIMods.Any(m => m.Acronym == "AP") => CreateSpecialRuleset(OSU_AUTOPILOT_MODE_SHORTNAME, OSU_AUTOPILOT_ONLINE_ID),
+                TAIKO_MODE_SHORTNAME when score.Mods.OfType<ModRelax>().Any() => CreateSpecialRuleset(TAIKO_RELAX_MODE_SHORTNAME, TAIKO_RELAX_ONLINE_ID),
+                CATCH_MODE_SHORTNAME when score.Mods.OfType<ModRelax>().Any() => CreateSpecialRuleset(CATCH_RELAX_MODE_SHORTNAME, CATCH_RELAX_ONLINE_ID),
+                _ => null
+            };
         }
 
         public RulesetInfo CreateNormalRuleset()

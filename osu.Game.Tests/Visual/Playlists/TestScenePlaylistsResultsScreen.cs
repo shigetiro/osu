@@ -434,6 +434,8 @@ namespace osu.Game.Tests.Visual.Playlists
                     Passed = true,
                     Rank = userScore.Rank,
                     MaxCombo = userScore.MaxCombo,
+                    TotalScore = userScore.TotalScore,
+                    TotalScoreWithoutMods = userScore.TotalScoreWithoutMods,
                     BeatmapId = RNG.Next(0, 7),
                     User = new APIUser
                     {
@@ -450,6 +452,8 @@ namespace osu.Game.Tests.Visual.Playlists
                     Passed = true,
                     Rank = userScore.Rank,
                     MaxCombo = userScore.MaxCombo,
+                    TotalScore = userScore.TotalScore,
+                    TotalScoreWithoutMods = userScore.TotalScoreWithoutMods,
                     BeatmapId = RNG.Next(0, 7),
                     User = new APIUser
                     {
@@ -478,6 +482,8 @@ namespace osu.Game.Tests.Visual.Playlists
                 Rank = userScore.Rank,
                 Position = userScore.Position,
                 MaxCombo = userScore.MaxCombo,
+                TotalScore = userScore.TotalScore,
+                TotalScoreWithoutMods = userScore.TotalScoreWithoutMods,
                 User = userScore.User,
                 BeatmapId = RNG.Next(0, 7),
                 ScoresAround = new MultiplayerScoresAround
@@ -515,6 +521,8 @@ namespace osu.Game.Tests.Visual.Playlists
                     Passed = true,
                     Rank = ScoreRank.X,
                     MaxCombo = 1000,
+                    TotalScore = 1000000,
+                    TotalScoreWithoutMods = 1000000,
                     BeatmapId = RNG.Next(0, 7),
                     User = new APIUser
                     {

@@ -8,12 +8,15 @@
     <Version>0.0.0</Version>
     <ApplicationVersion Condition=" '$(ApplicationVersion)' == '' ">1</ApplicationVersion>
     <ApplicationDisplayVersion Condition=" '$(ApplicationDisplayVersion)' == '' ">$(Version)</ApplicationDisplayVersion>
-    
+
     <!-- Android application properties -->
     <ApplicationId>com.googuteam.osu</ApplicationId>
     <ApplicationTitle>osu! GU</ApplicationTitle>
     <AndroidManifest>AndroidManifest.xml</AndroidManifest>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Remove="Resources\values\styles.xml" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\osu.Game.Rulesets.Catch\osu.Game.Rulesets.Catch.csproj" />
     <ProjectReference Include="..\osu.Game.Rulesets.Mania\osu.Game.Rulesets.Mania.csproj" />
@@ -22,6 +25,10 @@
     <ProjectReference Include="..\osu.Game\osu.Game.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <AndroidResource Include="Resources\values\styles.xml" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Essentials" Version="8.0.3" />
+    <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.6.1.7" />
   </ItemGroup>
 </Project>

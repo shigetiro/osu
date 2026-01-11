@@ -19,11 +19,13 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Localisation;
+using osu.Game.Localisation.SkinComponents;
 using osu.Game.Online;
 using osu.Game.Online.Chat;
 using osu.Game.Overlays;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
+using osuTK;
 using osuTK.Graphics;
 
 namespace osu.Game.Screens.SelectV2
@@ -57,6 +59,7 @@ namespace osu.Game.Screens.SelectV2
             private OsuSpriteText mappedByText = null!;
             private OsuHoverContainer mapperLink = null!;
             private OsuSpriteText mapperText = null!;
+            private OsuSpriteText maxPPText = null!;
 
             private GridContainer ratingAndNameContainer = null!;
             private DifficultyStatisticsDisplay countStatisticsDisplay = null!;
@@ -101,6 +104,7 @@ namespace osu.Game.Screens.SelectV2
                                     new Dimension(GridSizeMode.AutoSize),
                                     new Dimension(GridSizeMode.Absolute, 6),
                                     new Dimension(),
+                                    new Dimension(GridSizeMode.AutoSize),
                                 },
                                 Content = new[]
                                 {
@@ -145,6 +149,32 @@ namespace osu.Game.Screens.SelectV2
                                                         Shadow = true,
                                                         Font = OsuFont.Style.Body.With(weight: FontWeight.SemiBold),
                                                     },
+                                                },
+                                            },
+                                        },
+                                        new FillFlowContainer
+                                        {
+                                            Anchor = Anchor.CentreRight,
+                                            Origin = Anchor.CentreRight,
+                                            AutoSizeAxes = Axes.Both,
+                                            Direction = FillDirection.Horizontal,
+                                            Spacing = new Vector2(2, 0),
+                                            Margin = new MarginPadding { Right = 10 },
+                                            Children = new Drawable[]
+                                            {
+                                                new OsuSpriteText
+                                                {
+                                                    Anchor = Anchor.Centre,
+                                                    Origin = Anchor.Centre,
+                                                    Text = BeatmapAttributeTextStrings.MaxPP,
+                                                    Font = OsuFont.Style.Body,
+                                                },
+                                                maxPPText = new OsuSpriteText
+                                                {
+                                                    Anchor = Anchor.Centre,
+                                                    Origin = Anchor.Centre,
+                                                    Font = OsuFont.Numeric.With(weight: FontWeight.SemiBold),
+                                                    Text = "--",
                                                 },
                                             },
                                         },
@@ -250,6 +280,7 @@ namespace osu.Game.Screens.SelectV2
                 }
 
                 starRatingDisplay.Current = (Bindable<StarDifficulty>)difficultyCache.GetBindableDifficulty(beatmap.Value.BeatmapInfo, cancellationSource.Token, SongSelect.DIFFICULTY_CALCULATION_DEBOUNCE);
+                starRatingDisplay.Current.BindValueChanged(d => updateMaxPP(d.NewValue), true);
 
                 updateCountStatistics(cancellationSource.Token);
                 updateDifficultyStatistics();
@@ -310,6 +341,12 @@ namespace osu.Game.Screens.SelectV2
                 mappedByText.Colour = col;
                 countStatisticsDisplay.AccentColour = col;
                 difficultyStatisticsDisplay.AccentColour = col;
+            }
+
+            private void updateMaxPP(StarDifficulty starDifficulty)
+            {
+                double maxPP = Math.Round(starDifficulty.PerformanceAttributes?.Total ?? 0, 1, MidpointRounding.AwayFromZero);
+                maxPPText.Text = maxPP  > 0 ? $": {maxPP:0}pp" : "--";
             }
 
             private partial class MapperLinkContainer : OsuHoverContainer

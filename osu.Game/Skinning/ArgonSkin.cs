@@ -99,12 +99,48 @@ namespace osu.Game.Skinning
                     switch (containerLookup.Lookup)
                     {
                         case GlobalSkinnableContainers.SongSelect:
-                            var songSelectComponents = new DefaultSkinComponentsContainer(_ =>
+                            return new DefaultSkinComponentsContainer(container =>
                             {
-                                // do stuff when we need to.
-                            });
+                                var maxPP = container.OfType<BeatmapAttributeText>().FirstOrDefault();
+                                var ppProjection = container.OfType<PerformanceProjectionDisplay>().FirstOrDefault();
 
-                            return songSelectComponents;
+                                if (maxPP != null)
+                                {
+                                    maxPP.Anchor = Anchor.TopRight;
+                                    maxPP.Origin = Anchor.TopRight;
+                                    maxPP.Position = new Vector2(-20, 12);
+                                }
+
+                                if (ppProjection != null)
+                                {
+                                    ppProjection.Anchor = Anchor.TopRight;
+                                    ppProjection.Origin = Anchor.TopRight;
+                                    ppProjection.Position = new Vector2(-20, 40);
+                                }
+                            })
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Children = new Drawable[]
+                                {
+                                    new BeatmapAttributeText
+                                    {
+                                        Anchor = Anchor.TopRight,
+                                        Origin = Anchor.TopRight,
+                                        Attribute = { Value = BeatmapAttribute.MaxPP },
+                                    },
+                                    new PerformanceProjectionDisplay
+                                    {
+                                        Anchor = Anchor.TopRight,
+                                        Origin = Anchor.TopRight,
+                                        // Configuration options for PP projection display
+                                        Show95Percent = { Value = true },
+                                        Show97Percent = { Value = true },
+                                        Show99Percent = { Value = true },
+                                        Show100Percent = { Value = true },
+                                        LayoutDirection = { Value = ProjectionLayoutDirection.Horizontal },
+                                    }
+                                }
+                            };
 
                         case GlobalSkinnableContainers.MainHUDComponents:
                             if (containerLookup.Ruleset != null)
@@ -157,6 +193,7 @@ namespace osu.Game.Skinning
                                 var score = container.OfType<ArgonScoreCounter>().FirstOrDefault();
                                 var accuracy = container.OfType<ArgonAccuracyCounter>().FirstOrDefault();
                                 var performancePoints = container.OfType<ArgonPerformancePointsCounter>().FirstOrDefault();
+                                var ppProjection = container.OfType<PerformanceProjectionDisplay>().FirstOrDefault();
                                 var songProgress = container.OfType<ArgonSongProgress>().FirstOrDefault();
                                 var keyCounter = container.OfType<ArgonKeyCounterDisplay>().FirstOrDefault();
 
@@ -202,6 +239,13 @@ namespace osu.Game.Skinning
                                         performancePoints.Position = new Vector2(accuracy.X, accuracy.Y + accuracy.DrawHeight + 10);
                                         performancePoints.Anchor = Anchor.TopRight;
                                         performancePoints.Origin = Anchor.TopRight;
+                                    }
+
+                                    if (ppProjection != null && accuracy != null && performancePoints != null)
+                                    {
+                                        ppProjection.Anchor = Anchor.TopRight;
+                                        ppProjection.Origin = Anchor.TopRight;
+                                        ppProjection.Position = new Vector2(accuracy.X, performancePoints.Y + performancePoints.DrawHeight + 10);
                                     }
 
                                     var hitError = container.OfType<HitErrorMeter>().FirstOrDefault();
@@ -265,6 +309,17 @@ namespace osu.Game.Skinning
                                     new ArgonPerformancePointsCounter
                                     {
                                         Scale = new Vector2(0.8f),
+                                    },
+                                    new PerformanceProjectionDisplay
+                                    {
+                                        Anchor = Anchor.TopRight,
+                                        Origin = Anchor.TopRight,
+                                        // Configuration options for PP projection display
+                                        Show95Percent = { Value = true },
+                                        Show97Percent = { Value = true },
+                                        Show99Percent = { Value = true },
+                                        Show100Percent = { Value = true },
+                                        LayoutDirection = { Value = ProjectionLayoutDirection.Horizontal },
                                     },
                                     new BarHitErrorMeter(),
                                     new BarHitErrorMeter(),

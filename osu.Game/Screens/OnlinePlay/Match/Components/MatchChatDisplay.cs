@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.ComponentModel;
+using System.Linq;
 using osu.Framework.Allocation;
 using osu.Game.Online.Chat;
 using osu.Game.Online.Rooms;
@@ -28,6 +29,7 @@ namespace osu.Game.Screens.OnlinePlay.Match.Components
             base.LoadComplete();
 
             room.PropertyChanged += onRoomPropertyChanged;
+            channelManager?.AvailableChannels.BindCollectionChanged((_, __) => updateChannel());
             updateChannel();
         }
 
@@ -39,10 +41,27 @@ namespace osu.Game.Screens.OnlinePlay.Match.Components
 
         private void updateChannel()
         {
-            if (room.RoomID == null || room.ChannelId == 0)
+            if (room.RoomID == null)
                 return;
 
-            Channel.Value = channelManager?.JoinChannel(new Channel { Id = room.ChannelId, Type = ChannelType.Multiplayer, Name = $"#lazermp_{room.RoomID.Value}" });
+            if (room.ChannelId != 0)
+            {
+                Channel.Value = channelManager?.JoinChannel(new Channel { Id = room.ChannelId, Type = ChannelType.Multiplayer, Name = $"#mp_{room.RoomID.Value}" });
+                return;
+            }
+
+            var patterns = new[]
+            {
+                $"#mp_{room.RoomID.Value}",
+                $"mp_{room.RoomID.Value}",
+                $"#lazermp_{room.RoomID.Value}",
+                $"lazermp_{room.RoomID.Value}"
+            };
+
+            var existing = channelManager?.AvailableChannels.FirstOrDefault(c => patterns.Contains(c.Name))
+                           ?? channelManager?.JoinedChannels.FirstOrDefault(c => patterns.Contains(c.Name));
+            if (existing != null)
+                Channel.Value = channelManager?.JoinChannel(existing);
         }
 
         protected override void Dispose(bool isDisposing)

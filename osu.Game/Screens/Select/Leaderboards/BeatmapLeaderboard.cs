@@ -88,6 +88,54 @@ namespace osu.Game.Screens.Select.Leaderboards
 
         protected override bool IsOnlineScope => Scope != BeatmapLeaderboardScope.Local;
 
+        /// <summary>
+        /// Gets the mods to filter by. Applies intelligent filtering based on Relax/Autopilot status.
+        /// If "FilterMods" is enabled, uses selected mods. Otherwise, applies global filtering:
+        /// - If Relax/Autopilot is active in selected mods, show all combinations with that mod
+        /// - If neither is active, show only non-automation scores
+        /// </summary>
+        private Mod[]? getFilterMods()
+        {
+            var selectedMods = mods.Value.Where(m => m.UserPlayable).ToArray();
+
+            if (selectedMods.Length == 0)
+                return null;
+
+            // Check if Relax or Autopilot is active
+            bool hasRelax = selectedMods.Any(m => m.Acronym == "RX");
+            bool hasAutopilot = selectedMods.Any(m => m.Acronym == "AP");
+
+            // Global filtering logic (applies regardless of FilterMods setting)
+            // If Relax is active, show all Relax combinations (RX, RXDT, RXHR, etc.)
+            if (hasRelax)
+            {
+                // Return a mod array containing only Relax - this will filter to show any combination with Relax
+                return new[] { selectedMods.FirstOrDefault(m => m.Acronym == "RX")! };
+            }
+
+            // If Autopilot is active, show all Autopilot combinations
+            if (hasAutopilot)
+            {
+                // Return a mod array containing only Autopilot - this will filter to show any combination with Autopilot
+                return new[] { selectedMods.FirstOrDefault(m => m.Acronym == "AP")! };
+            }
+
+            // If FilterMods is enabled and neither Relax nor Autopilot is selected,
+            // filter to show only the selected mods
+            if (filterMods)
+            {
+                return selectedMods;
+            }
+
+            // If FilterMods is disabled and neither Relax nor Autopilot is selected,
+            // filter out automation mods to show non-automation scores
+            var nonAutomationMods = selectedMods
+                .Where(m => m.Type != ModType.Automation)
+                .ToArray();
+
+            return nonAutomationMods.Length > 0 ? nonAutomationMods : null;
+        }
+
         protected override APIRequest? FetchScores(CancellationToken cancellationToken)
         {
             var fetchBeatmapInfo = BeatmapInfo;
@@ -100,7 +148,7 @@ namespace osu.Game.Screens.Select.Leaderboards
             // For now, we forcefully refresh to keep things simple.
             // In the future, removing this requirement may be deemed useful, but will need ample testing of edge case scenarios
             // (like returning from gameplay after setting a new score, returning to song select after main menu).
-            leaderboardManager.FetchWithCriteria(new LeaderboardCriteria(fetchBeatmapInfo, fetchRuleset, Scope, filterMods ? mods.Value.Where(m => m.UserPlayable).ToArray() : null), forceRefresh: true);
+            leaderboardManager.FetchWithCriteria(new LeaderboardCriteria(fetchBeatmapInfo, fetchRuleset, Scope, getFilterMods()), forceRefresh: true);
 
             if (!initialFetchComplete)
             {

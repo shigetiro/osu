@@ -114,10 +114,10 @@ namespace osu.Game.Overlays
             sections = !user.IsBot
                 ? new ProfileSection[]
                 {
-                    //new AboutSection(),
+                    new AboutSection(),
                     new RecentSection(),
                     new RanksSection(),
-                    //new MedalsSection(),
+                    new MedalsSection(),
                     new HistoricalSection(),
                     new BeatmapsSection(),
                     new KudosuSection()

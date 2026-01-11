@@ -4,11 +4,11 @@
     <OutputType>Library</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>click the circles. to the beat.</Description>
-    <Version>2025.1122.0</Version>
+    <Version>2025.1130.0</Version>
     <Authors>ppy Pty Ltd, GooGuTeam</Authors>
     <Copyright>Copyright (c) 2025 ppy Pty Ltd, GooGuTeam</Copyright>
-    <PackageProjectUrl>https://github.com/GooGuTeam/osu</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/GooGuTeam/osu</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/shigetiro/osu</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/shigetiro/osu</RepositoryUrl>
     <PackageReleaseNotes>osu! (ruleset) modified by GooGuTeam.
 Original copyright: Copyright (c) ppy Pty Ltd
 Full license text: see LICENSE file</PackageReleaseNotes>

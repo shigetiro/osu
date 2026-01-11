@@ -6,12 +6,13 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Resources.Localisation.Web;
+using osu.Game.Users;
 
 namespace osu.Game.Overlays.Profile.Header.Components
 {
     public partial class TotalPlayTime : CompositeDrawable
     {
-        public readonly Bindable<UserProfileData?> User = new Bindable<UserProfileData?>();
+        public readonly Bindable<UserStatistics?> UserStatistics = new Bindable<UserStatistics?>();
 
         private ProfileValueDisplay info = null!;
 
@@ -26,17 +27,17 @@ namespace osu.Game.Overlays.Profile.Header.Components
             InternalChild = info = new ProfileValueDisplay(minimumWidth: 140)
             {
                 Title = UsersStrings.ShowStatsPlayTime,
-                Content = { TooltipText = "0 hours", }
+                ContentTooltipText = "0 hours",
             };
 
-            User.BindValueChanged(updateTime, true);
+            UserStatistics.BindValueChanged(updateTime, true);
         }
 
-        private void updateTime(ValueChangedEvent<UserProfileData?> user)
+        private void updateTime(ValueChangedEvent<UserStatistics?> statistics)
         {
-            int? playTime = user.NewValue?.User.Statistics?.PlayTime;
-            info.Content.TooltipText = (playTime ?? 0) / 3600 + " hours";
-            info.Content.Text = formatTime(playTime);
+            int? playTime = statistics.NewValue?.PlayTime;
+            info.ContentTooltipText = (playTime ?? 0) / 3600 + " hours";
+            info.Content = formatTime(playTime);
         }
 
         private string formatTime(int? secondsNull)

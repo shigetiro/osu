@@ -69,7 +69,7 @@ namespace osu.Game.Online
             if (!watchedScores.Remove(scoreId, out var scoreInfo))
                 return;
 
-            statisticsProvider.RefetchStatistics(scoreInfo.Ruleset, u => Schedule(() =>
+            statisticsProvider.RefetchStatistics(scoreInfo, u => Schedule(() =>
             {
                 if (u.OldStatistics != null)
                     latestUpdate.Value = new ScoreBasedUserStatisticsUpdate(scoreInfo, u.OldStatistics, u.NewStatistics);

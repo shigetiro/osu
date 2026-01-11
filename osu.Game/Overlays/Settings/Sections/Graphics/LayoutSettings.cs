@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using osu.Framework.Graphics.Primitives;
 using System.Linq;
 using osu.Framework;
 using osu.Framework.Allocation;
@@ -234,9 +235,12 @@ namespace osu.Game.Overlays.Settings.Sections.Graphics
                                                    .Select(m => m.Size)
                                                    .Distinct()
                                                    .ToList();
+
                 var windowedResolutions = fullscreenResolutions
-                                          .Where(res => res.Width <= display.NewValue.UsableBounds.Width && res.Height <= display.NewValue.UsableBounds.Height)
-                                          .ToList();
+                    .Where(res =>
+                        res.Width <= display.NewValue.Bounds.Width &&
+                        res.Height <= display.NewValue.Bounds.Height)
+                    .ToList();
 
                 resolutionsFullscreen.ReplaceRange(1, resolutionsFullscreen.Count - 1, fullscreenResolutions);
                 resolutionsWindowed.ReplaceRange(0, resolutionsWindowed.Count, windowedResolutions);
@@ -258,9 +262,10 @@ namespace osu.Game.Overlays.Settings.Sections.Graphics
 
                 // Adjust only for top decorations (assuming system titlebar).
                 // Bottom/left/right borders are ignored as invisible padding, which don't align with the screen.
-                var dBounds = currentDisplay.Value.Bounds;
-                var dUsable = currentDisplay.Value.UsableBounds;
-                float topBar = host.Window?.BorderSize.Value.Top ?? 0;
+                // Anstatt zu casten, direkt die Properties verwenden:
+                dynamic dBounds = currentDisplay.Value.Bounds;
+                dynamic dUsable = currentDisplay.Value.UsableBounds;
+                float topBar = host.Window?.SafeAreaPadding.Value.Top ?? 0;
 
                 int w = Math.Min(size.NewValue.Width, dUsable.Width);
                 int h = (int)Math.Min(size.NewValue.Height, dUsable.Height - topBar);

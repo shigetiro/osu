@@ -225,6 +225,52 @@ namespace osu.Game.Screens.SelectV2
 
         private ScheduledDelegate? refetchOperation;
 
+        /// <summary>
+        /// Gets the mods to filter by. Applies intelligent filtering based on Relax/Autopilot status.
+        /// - If Relax is in selected mods (FilterBySelectedMods ON), show ALL Relax combinations regardless of other mods
+        /// - If Autopilot is in selected mods (FilterBySelectedMods ON), show ALL Autopilot combinations regardless of other mods
+        /// - If FilterBySelectedMods is ON without automation mods, show only the exact selected mod combination
+        /// - If FilterBySelectedMods is OFF (Global), return null to show all scores EXCEPT those with automation mods
+        /// </summary>
+        private Mod[]? getFilterMods()
+        {
+            var selectedMods = mods.Value;
+
+            // Check if Relax or Autopilot is active
+            bool hasRelax = selectedMods.Any(m => m.Acronym == "RX");
+            bool hasAutopilot = selectedMods.Any(m => m.Acronym == "AP");
+
+            // If FilterBySelectedMods is ON and either Relax or Autopilot is selected
+            if (FilterBySelectedMods.Value)
+            {
+                // If Relax is active, show ALL Relax combinations (RX, RXDT, RXHR, etc.)
+                // regardless of other selected mods
+                if (hasRelax)
+                {
+                    return new[] { selectedMods.First(m => m.Acronym == "RX") };
+                }
+
+                // If Autopilot is active, show ALL Autopilot combinations (AP, APDT, APHR, etc.)
+                // regardless of other selected mods
+                if (hasAutopilot)
+                {
+                    return new[] { selectedMods.First(m => m.Acronym == "AP") };
+                }
+
+                // If neither Relax nor Autopilot is selected and FilterBySelectedMods is ON,
+                // show only the exact selected mod combination
+                if (selectedMods.Count > 0)
+                {
+                    return selectedMods.ToArray();
+                }
+            }
+
+            // If FilterBySelectedMods is OFF (Global leaderboard mode),
+            // return null to show all scores EXCEPT those with automation mods (like Global/Friends leaderboard)
+            // This means NM, DT, HR, DTHR, CLDTHR, etc. are all shown, but RX, AP, Autoplay are not
+            return null;
+        }
+
         public void RefetchScores()
         {
             SetScores(Array.Empty<ScoreInfo>());
@@ -247,7 +293,7 @@ namespace osu.Game.Screens.SelectV2
                 // For now, we forcefully refresh to keep things simple.
                 // In the future, removing this requirement may be deemed useful, but will need ample testing of edge case scenarios
                 // (like returning from gameplay after setting a new score, returning to song select after main menu).
-                leaderboardManager.FetchWithCriteria(new LeaderboardCriteria(fetchBeatmapInfo, fetchRuleset, Scope.Value, FilterBySelectedMods.Value ? mods.Value.ToArray() : null, fetchSorting),
+                leaderboardManager.FetchWithCriteria(new LeaderboardCriteria(fetchBeatmapInfo, fetchRuleset, Scope.Value, getFilterMods(), fetchSorting),
                     forceRefresh: true);
 
                 if (!initialFetchComplete)

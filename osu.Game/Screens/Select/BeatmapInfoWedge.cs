@@ -31,6 +31,7 @@ using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.UI;
 using osu.Game.Graphics.Containers;
 using osu.Game.Resources.Localisation.Web;
+using osu.Game.Localisation.SkinComponents;
 using osu.Game.Utils;
 
 namespace osu.Game.Screens.Select
@@ -163,6 +164,7 @@ namespace osu.Game.Screens.Select
             private FillFlowContainer infoLabelContainer;
             private Container bpmLabelContainer;
             private Container lengthLabelContainer;
+            private Container maxPPLabelContainer;
 
             private readonly WorkingBeatmap working;
             private readonly RulesetInfo ruleset;
@@ -336,6 +338,7 @@ namespace osu.Game.Screens.Select
                         starRatingDisplay.FinishTransforms(true);
 
                     starRatingDisplay.FadeIn(transition_duration);
+                    updateMaxPPLabel(s.NewValue);
                 });
 
                 mods.BindValueChanged(m =>
@@ -376,6 +379,10 @@ namespace osu.Game.Screens.Select
                             AutoSizeAxes = Axes.Both,
                         },
                         bpmLabelContainer = new Container
+                        {
+                            AutoSizeAxes = Axes.Both,
+                        },
+                        maxPPLabelContainer = new Container
                         {
                             AutoSizeAxes = Axes.Both,
                         },
@@ -425,6 +432,27 @@ namespace osu.Game.Screens.Select
                     Name = BeatmapsetsStrings.ShowStatsTotalLength(drainLength.ToFormattedDuration()),
                     CreateIcon = () => new BeatmapStatisticIcon(BeatmapStatisticsIconType.Length),
                     Content = hitLength.ToFormattedDuration().ToString(),
+                });
+            }
+
+            private void updateMaxPPLabel(StarDifficulty difficulty)
+            {
+                if (maxPPLabelContainer == null)
+                    return;
+
+                double pp = Math.Round(difficulty.PerformanceAttributes?.Total ?? 0, 1, MidpointRounding.AwayFromZero);
+
+                maxPPLabelContainer.Child = new InfoLabel(new BeatmapStatistic
+                {
+                    Name = BeatmapAttributeTextStrings.MaxPP,
+                    CreateIcon = () => new SpriteIcon
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Icon = FontAwesome.Solid.Bolt,
+                        Size = new Vector2(18),
+                    },
+                    Content = pp > 0 ? $"{pp:0.#}pp" : "--",
                 });
             }
 

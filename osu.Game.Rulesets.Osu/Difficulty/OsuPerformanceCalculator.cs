@@ -135,11 +135,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double accuracyValue = computeAccuracyValue(score, osuAttributes);
             double flashlightValue = computeFlashlightValue(score, osuAttributes);
 
-            if (isRelax)
-            {
-                aimValue *= 1.715;
-                accuracyValue *= 1.52;
-            }
 
             double totalValue =
                 Math.Pow(
@@ -229,7 +224,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             }
 
             // R* Precision buff (reading)
-            if (isRelax && circleSize > 5.58)
+            if (circleSize > 5.58)
             {
                 aimValue *= Math.Pow(Math.Pow(circleSize - 5.46, 1.8) + 1.0, 0.03);
 
@@ -240,9 +235,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                     aimValue *= 1.0 + Math.Clamp(circleSize - 6.0, 0.0, 0.2);
                 }
             }
-
-            // R* Tweak acc bonus for RX
-            aimValue *= isRelax ? 0.3 + accuracy / 2.0 : accuracy;
             // It is important to consider accuracy difficulty when scaling with accuracy.
             aimValue *= 0.98 + Math.Pow(Math.Max(0.0, overallDifficulty), 2) / 2500.0;
             // R* Bonus bonus normal clock rate scores
@@ -521,16 +513,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         // to make it more punishing on maps with lower amount of hard sections.
         private double calculateMissPenalty(double missCount, double difficultStrainCount, double totalHits, bool isRelax)
         {
-            if (isRelax)
-            {
-                if (totalHits <= 0)
-                    return 1.0;
-
-                double missPortion = missCount / totalHits;
-                missPortion = Math.Clamp(missPortion, 0.0, 1.0);
-
-                return 0.97 * Math.Pow(1.0 - Math.Pow(missPortion, 0.5), 1.0 + missCount / 1.5);
-            }
 
             return 0.96 / ((missCount / (4 * Math.Pow(Math.Log(difficultStrainCount), 0.94))) + 1);
         }

@@ -71,17 +71,17 @@ namespace osu.Game.Screens.Ranking.Expanded.Statistics
 
                 if (!scoreInfo.BeatmapInfo!.Status.GrantsPerformancePoints())
                 {
-                    Alpha = 0.5f;
+                    Alpha = 1f;
                     TooltipText = ResultsScreenStrings.NoPPForUnrankedBeatmaps;
                 }
                 else if (hasUnrankedMods(scoreInfo))
                 {
-                    Alpha = 0.5f;
+                    Alpha = 1f;
                     TooltipText = ResultsScreenStrings.NoPPForUnrankedMods;
                 }
                 else if (scoreInfo.Rank == ScoreRank.F)
                 {
-                    Alpha = 0.5f;
+                    Alpha = 1f;
                     TooltipText = ResultsScreenStrings.NoPPForFailedScores;
                 }
                 else

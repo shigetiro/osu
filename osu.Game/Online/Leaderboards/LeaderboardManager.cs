@@ -93,16 +93,22 @@ namespace osu.Game.Online.Leaderboards
                         return;
                     }
 
-                    if (!newCriteria.Ruleset.IsLegacyRuleset())
-                    {
-                        scores.Value = LeaderboardScores.Failure(LeaderboardFailState.RulesetUnavailable);
-                        return;
-                    }
+                    // Allow Rhythia beatmaps to bypass checks
+                    bool isRhythiaBeatmap = newCriteria.Beatmap.Metadata?.Tags?.Contains("sspm", StringComparison.OrdinalIgnoreCase) == true;
 
-                    if (newCriteria.Beatmap.OnlineID <= 0 || newCriteria.Beatmap.Status <= BeatmapOnlineStatus.Pending)
+                    if (!isRhythiaBeatmap)
                     {
-                        scores.Value = LeaderboardScores.Failure(LeaderboardFailState.BeatmapUnavailable);
-                        return;
+                        if (!newCriteria.Ruleset.IsLegacyRuleset())
+                        {
+                            scores.Value = LeaderboardScores.Failure(LeaderboardFailState.RulesetUnavailable);
+                            return;
+                        }
+
+                        if (newCriteria.Beatmap.OnlineID <= 0 || newCriteria.Beatmap.Status <= BeatmapOnlineStatus.Pending)
+                        {
+                            scores.Value = LeaderboardScores.Failure(LeaderboardFailState.BeatmapUnavailable);
+                            return;
+                        }
                     }
 
                     if ((newCriteria.Scope.RequiresSupporter(newCriteria.ExactMods != null)) && !api.LocalUser.Value.IsSupporter)

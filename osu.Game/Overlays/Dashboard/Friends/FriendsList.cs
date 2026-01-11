@@ -96,11 +96,14 @@ namespace osu.Game.Overlays.Dashboard.Friends
                         break;
 
                     case OnlineStatus.Online:
-                        panel.CanBeShown.Value = friendPresences.ContainsKey(panel.User.OnlineID);
+                        // Use MetadataClient.GetPresence to perform a canonical presence lookup. This
+                        // will correctly consult friend/user presences (and the local user) so that
+                        // the Online filter matches the counts shown by the stream control.
+                        panel.CanBeShown.Value = metadataClient.GetPresence(panel.User.OnlineID) != null;
                         break;
 
                     case OnlineStatus.Offline:
-                        panel.CanBeShown.Value = !friendPresences.ContainsKey(panel.User.OnlineID);
+                        panel.CanBeShown.Value = metadataClient.GetPresence(panel.User.OnlineID) == null;
                         break;
                 }
             }
