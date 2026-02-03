@@ -3,7 +3,6 @@
 
 #nullable disable
 
-using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -17,29 +16,58 @@ namespace osu.Game.Online.API.Requests.Responses
         [JsonProperty("title")]
         public string Title { get; set; }
 
-        [JsonProperty("artist")]
-        public string Artist { get; set; }
-
-        [JsonProperty("author")]
+        [JsonProperty("ownerUsername")]
         public string Author { get; set; }
 
-        [JsonProperty("bpm")]
-        public float BPM { get; set; }
+        [JsonProperty("ownerUsername")]
+        public string Artist { get; set; }
 
-        [JsonProperty("preview")]
+        [JsonProperty("starRating")]
+        public double StarRating { get; set; }
+
+        [JsonProperty("status")]
+        public string Status { get; set; }
+
+        [JsonProperty("beatmapFile")]
+        public string BeatmapFile { get; set; }
+
+        [JsonProperty("image")]
+        public string Image { get; set; }
+
+        [JsonProperty("image")]
         public string Preview { get; set; }
 
-        [JsonProperty("background")]
+        [JsonProperty("image")]
         public string Background { get; set; }
 
-        [JsonProperty("storyboard")]
-        public bool Storyboard { get; set; }
+        [JsonProperty("image")]
+        public string Storyboard { get; set; }
+
+        [JsonProperty("length")]
+        public int Length { get; set; }
+
+        [JsonProperty("bpm")]
+        public double BPM { get; set; }
+
+        [JsonProperty("playcount")]
+        public int PlayCount { get; set; }
+
+        [JsonProperty("created_at")]
+        public string CreatedAt { get; set; }
 
         [JsonProperty("tags")]
         public string Tags { get; set; }
 
-        [JsonProperty("beatmaps")]
-        public List<RhythiaBeatmap> Beatmaps { get; set; }
+        [JsonProperty("videoUrl")]
+        public string VideoUrl { get; set; }
+
+        [JsonProperty("ranked")]
+        public bool Ranked { get; set; }
+
+        [JsonProperty("difficulty")]
+        public int Difficulty { get; set; }
+
+        public List<RhythiaBeatmap> Beatmaps { get; set; } = new List<RhythiaBeatmap>();
     }
 
     public class RhythiaBeatmap
@@ -51,21 +79,27 @@ namespace osu.Game.Online.API.Requests.Responses
         public string Version { get; set; }
 
         [JsonProperty("difficulty")]
-        public float Difficulty { get; set; }
+        public double Difficulty { get; set; }
 
         [JsonProperty("cs")]
-        public float CS { get; set; }
+        public double CS { get; set; }
 
         [JsonProperty("ar")]
-        public float AR { get; set; }
+        public double AR { get; set; }
 
         [JsonProperty("od")]
-        public float OD { get; set; }
+        public double OD { get; set; }
 
         [JsonProperty("hp")]
-        public float HP { get; set; }
+        public double HP { get; set; }
 
         [JsonProperty("length")]
         public int Length { get; set; }
+
+        [JsonProperty("status")]
+        public string Status { get; set; }
+
+        [JsonProperty("checksum")]
+        public string Checksum { get; set; }
     }
 }

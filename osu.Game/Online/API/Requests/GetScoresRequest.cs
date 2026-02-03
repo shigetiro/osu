@@ -30,8 +30,8 @@ namespace osu.Game.Online.API.Requests
 
         public GetScoresRequest(IBeatmapInfo beatmapInfo, IRulesetInfo ruleset, BeatmapLeaderboardScope scope = BeatmapLeaderboardScope.Global, IEnumerable<IMod>? mods = null)
         {
-            // Allow Rhythia beatmaps with sspm tag or if the ruleset is osuspaceruleset (Space)
-            bool isRhythiaBeatmap = ruleset?.ShortName == "osuspaceruleset" || beatmapInfo.Metadata?.Tags?.Contains("sspm", StringComparison.OrdinalIgnoreCase) == true;
+            // Allow Rhythia beatmaps with sspm tag
+            bool isRhythiaBeatmap = beatmapInfo.Metadata?.Tags?.Contains("sspm", StringComparison.OrdinalIgnoreCase) == true;
 
             if (beatmapInfo.OnlineID <= 0 && !isRhythiaBeatmap)
                 throw new InvalidOperationException($"Cannot lookup a beatmap's scores without having a populated {nameof(IBeatmapInfo.OnlineID)}.");
@@ -51,25 +51,16 @@ namespace osu.Game.Online.API.Requests
         {
             get
             {
-                // Check if this is a Rhythia beatmap by looking for "sspm" tag or if the ruleset is osuspaceruleset
-                if (ruleset.ShortName == "osuspaceruleset" || beatmapInfo.Metadata?.Tags?.Contains("sspm", StringComparison.OrdinalIgnoreCase) == true)
+                // Check if this is a Rhythia beatmap by looking for "sspm" tag and numeric identifier
+                if (beatmapInfo.Metadata?.Tags?.Contains("sspm", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    // For Rhythia beatmaps, try to extract the ID from the tags (format: sspm {id} osuspaceruleset)
-                    // We prioritize the extracted ID, then OnlineID, then fallback to MD5
-                    string? extractedId = null;
-                    // Regex to find "sspm {id}" with optional spaces, case insensitive
                     var match = Regex.Match(beatmapInfo.Metadata.Tags ?? "", @"sspm\s+(\d+)", RegexOptions.IgnoreCase);
                     if (match.Success)
                     {
-                        extractedId = match.Groups[1].Value;
+                        var extractedId = match.Groups[1].Value;
+                        return $@"rhythia/maps/{extractedId}/leaderboard";
                     }
-
-                    string beatmapIdentifier = extractedId
-                        ?? (beatmapInfo.OnlineID > 0 ? beatmapInfo.OnlineID.ToString() : beatmapInfo.MD5Hash);
-
-                    return $@"rhythia/maps/{beatmapIdentifier}/leaderboard";
                 }
-
                 return $@"beatmaps/{beatmapInfo.OnlineID}/scores";
             }
         }

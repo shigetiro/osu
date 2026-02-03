@@ -52,7 +52,6 @@ namespace osu.Game.Online.API
                     Card = rhythiaSet.Background,
                     List = rhythiaSet.Background
                 },
-                HasStoryboard = rhythiaSet.Storyboard,
                 Tags = rhythiaSet.Tags,
                 Status = BeatmapOnlineStatus.Ranked, // Set to ranked for SSPM maps
                 Source = string.Empty,
@@ -69,10 +68,10 @@ namespace osu.Game.Online.API
                     RulesetID = 727, // osu!space ruleset ID
                     DifficultyName = rhythiaBeatmap.Version,
                     StarRating = rhythiaBeatmap.Difficulty,
-                    CircleSize = rhythiaBeatmap.CS,
-                    ApproachRate = rhythiaBeatmap.AR,
-                    OverallDifficulty = rhythiaBeatmap.OD,
-                    DrainRate = rhythiaBeatmap.HP,
+                    CircleSize = (float)rhythiaBeatmap.CS,
+                    ApproachRate = (float)rhythiaBeatmap.AR,
+                    OverallDifficulty = (float)rhythiaBeatmap.OD,
+                    DrainRate = (float)rhythiaBeatmap.HP,
                     Length = rhythiaBeatmap.Length,
                     HitLength = rhythiaBeatmap.Length,
                     Status = BeatmapOnlineStatus.Ranked, // Set to ranked for SSPM maps

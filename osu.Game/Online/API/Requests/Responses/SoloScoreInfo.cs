@@ -252,6 +252,7 @@ namespace osu.Game.Online.API.Requests.Responses
         /// <param name="score">The local score.</param>
         public static SoloScoreInfo ForSubmission(ScoreInfo score) => new SoloScoreInfo
         {
+            UserID = score.UserID,
             Rank = score.Rank,
             TotalScore = score.TotalScore,
             TotalScoreWithoutMods = score.TotalScoreWithoutMods,
