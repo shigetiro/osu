@@ -25,6 +25,7 @@ using osu.Game.Graphics.Containers;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Overlays.Settings.Sections;
 using osu.Game.Rulesets.Space.Extension.SSPM;
+using osu.Game.Screens.Edit;
 using osu.Framework.Screens;
 using System;
 using osu.Game.Database;
@@ -57,25 +58,25 @@ namespace osu.Game.Rulesets.Space
         private UserProfileOverlay? userProfile { get; set; }
 
         [Resolved]
-        private Storage storage { get; set; }
+        private Storage? storage { get; set; }
 
         [Resolved]
-        private GameHost host { get; set; }
+        private GameHost? host { get; set; }
 
         [Resolved(CanBeNull = true)]
-        private OsuGame game { get; set; }
+        private OsuGame? game { get; set; }
 
         [Resolved]
-        private OsuColour colours { get; set; }
+        private OsuColour? colours { get; set; }
 
         [Resolved]
-        private RealmAccess realm { get; set; } = null!;
+        private RealmAccess? realm { get; set; }
 
         [Resolved]
-        private Bindable<WorkingBeatmap> currentBeatmap { get; set; }
+        private Bindable<WorkingBeatmap>? currentBeatmap { get; set; }
 
         [Resolved]
-        private BeatmapManager beatmapManager { get; set; }
+        private BeatmapManager? beatmapManager { get; set; }
 
         [BackgroundDependencyLoader]
         private void load()
@@ -100,14 +101,20 @@ namespace osu.Game.Rulesets.Space
                 new SettingsButton
                 {
                     Text = "GitHub Repository",
-                    Action = () => host.OpenUrlExternally("https://github.com/michioxd/osu-space"),
-                    BackgroundColour = colours.YellowDark,
+                    Action = () => host?.OpenUrlExternally("https://github.com/michioxd/osu-space"),
+                    BackgroundColour = colours?.YellowDark ?? Colour4.Yellow,
+                },
+                new SettingsButton
+                {
+                    Text = "Open Space Editor",
+                    Action = openSpaceEditor,
+                    BackgroundColour = colours?.PinkDark ?? Colour4.Pink,
                 },
                 checkForUpdatesButton = new SettingsButton
                 {
                     Text = "Check for Updates",
                     Action = checkRulesetUpdate,
-                    BackgroundColour = colours.BlueDark,
+                    BackgroundColour = colours?.BlueDark ?? Colour4.Blue,
                 },
                 new SettingsButton
                 {
@@ -116,8 +123,8 @@ namespace osu.Game.Rulesets.Space
                 },
                 new SettingsButton
                 {
-                    Text = "Download Rhythia Maps",
-                    Action = openDownloadScreen,
+                    Text = "Download SSPM Maps",
+                    Action = openSSPMDownload,
                 },
                 new DangerousSettingsButton
                 {
@@ -192,14 +199,14 @@ namespace osu.Game.Rulesets.Space
                     LabelText = "Approach Rate",
                     TooltipText = "The speed that note move toward the grid (m/s)",
                     Current = config.GetBindable<float>(SpaceRulesetSetting.approachRate),
-                    KeyboardStep = 1f
+                    KeyboardStep = 0.1f
                 },
                 new SettingsSlider<float>
                 {
                     LabelText = "Spawn Distance",
                     TooltipText = "Distance from the grid that note spawn (m)",
                     Current = config.GetBindable<float>(SpaceRulesetSetting.spawnDistance),
-                    KeyboardStep = 1f
+                    KeyboardStep = 0.1f
                 },
                 new SettingsSlider<float>
                 {
@@ -215,13 +222,6 @@ namespace osu.Game.Rulesets.Space
                     TooltipText = "While enabled, notes will go past the grid when you miss, instead of always vanishing 0.2 units past the grid",
                     Keywords = new[] { "miss", "push", "back" },
                     Current = config.GetBindable<bool>(SpaceRulesetSetting.doNotPushBack)
-                },
-                new SettingsCheckbox
-                {
-                    LabelText = "Half ghost",
-                    TooltipText = "Useful for patterns that fill the whole screen",
-                    Keywords = new[] { "ghost", "transparency", "alpha" },
-                    Current = config.GetBindable<bool>(SpaceRulesetSetting.halfGhost)
                 },
                 new SettingsSlider<float>
                 {
@@ -261,9 +261,26 @@ namespace osu.Game.Rulesets.Space
             game?.PerformFromScreen(s => s.Push(new SSPMImportScreen()));
         }
 
-        private void openDownloadScreen()
+        private void openSSPMDownload()
         {
             game?.PerformFromScreen(s => s.Push(new SSPMDownloadScreen()));
+        }
+
+        private void openSpaceEditor()
+        {
+            goHome(() =>
+            {
+                if (game == null) return;
+                currentBeatmap.Value = (WorkingBeatmap)beatmapManager?.DefaultBeatmap;
+                game.PerformFromScreen(s =>
+                {
+                    if (s is osu.Game.Screens.OsuScreen os)
+                    {
+                        os.Ruleset.Value = new SpaceRuleset().RulesetInfo;
+                        os.Push(new Editor());
+                    }
+                });
+            });
         }
 
         private void goHome(Action execute)
@@ -289,9 +306,9 @@ namespace osu.Game.Rulesets.Space
                 {
                     if (currentBeatmap.Value.BeatmapInfo?.Ruleset?.ShortName == "osuspaceruleset")
                     {
-                        currentBeatmap.Value = (WorkingBeatmap)beatmapManager.DefaultBeatmap;
+                        currentBeatmap.Value = (WorkingBeatmap)beatmapManager?.DefaultBeatmap;
                     }
-                    realm.Write(r =>
+                    realm?.Write(r =>
                     {
                         var beatmapsToDelete = r.All<BeatmapInfo>()
                             .Where(b => b.Ruleset != null)
@@ -405,12 +422,12 @@ namespace osu.Game.Rulesets.Space
                     new PopupDialogOkButton
                     {
                         Text = "View Release",
-                        Action = () => host.OpenUrlExternally(releaseUrl)
+                        Action = () => host?.OpenUrlExternally(releaseUrl)
                     },
                     new PopupDialogOkButton
                     {
                         Text = "Download",
-                        Action = () => host.OpenUrlExternally(downloadUrl)
+                        Action = () => host?.OpenUrlExternally(downloadUrl)
                     },
                     new PopupDialogCancelButton
                     {

@@ -24,6 +24,8 @@ using osu.Game.Rulesets.Space.Skinning.Argon;
 using osu.Game.Rulesets.Space.Skinning.Legacy;
 using osu.Game.Rulesets.Space.UI;
 using osu.Game.Rulesets.UI;
+using osu.Game.Rulesets.Edit;
+using osu.Game.Rulesets.Space.Edit;
 using osu.Game.Skinning;
 
 
@@ -67,6 +69,8 @@ namespace osu.Game.Rulesets.Space
 
         public override RulesetSettingsSubsection CreateSettings() => new SpaceSettingsSubsection(this);
 
+        public override HitObjectComposer CreateHitObjectComposer() => new SpaceHitObjectComposer(this);
+
         protected override IEnumerable<HitResult> GetValidHitResults()
         {
             return
@@ -106,14 +110,15 @@ namespace osu.Game.Rulesets.Space
                     [
                         new MultiMod(new SpaceModPerfect()),
                         new MultiMod(new SpaceModDoubleTime(), new SpaceModNightcore()),
+                        new SpaceModFullGhost(),
                         new ModAccuracyChallenge(),
                     ];
 
-                // case ModType.Conversion:
-                //     return new Mod[]
-                //     {
-
-                //     };
+                case ModType.Conversion:
+                    return
+                    [
+                        new SpaceModMirror(),
+                    ];
 
                 case ModType.Automation:
                     return
@@ -157,6 +162,9 @@ namespace osu.Game.Rulesets.Space
 
             if (mods.HasFlag(LegacyMods.Perfect))
                 yield return new SpaceModPerfect();
+
+            if (mods.HasFlag(LegacyMods.Hidden))
+                yield return new SpaceModFullGhost();
 
             if (mods.HasFlag(LegacyMods.Cinema))
                 yield return new SpaceModCinema();

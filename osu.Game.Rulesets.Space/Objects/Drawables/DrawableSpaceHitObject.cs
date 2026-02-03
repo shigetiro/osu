@@ -2,20 +2,21 @@
 using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Extensions.Color4Extensions;
+using osu.Framework.Extensions.PolygonExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Effects;
+using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Audio;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Rulesets.Space.Configuration;
+using osu.Game.Rulesets.Space.Mods;
 using osu.Game.Rulesets.Space.UI;
 using osuTK;
 using osuTK.Graphics;
-using osu.Framework.Extensions.Color4Extensions;
-using osu.Framework.Graphics.Effects;
-using osu.Framework.Graphics.Primitives;
-using osu.Framework.Extensions.PolygonExtensions;
 
 namespace osu.Game.Rulesets.Space.Objects.Drawables
 {
@@ -29,7 +30,6 @@ namespace osu.Game.Rulesets.Space.Objects.Drawables
         private readonly Bindable<float> spawnDistance = new();
         private readonly Bindable<float> fadeLength = new();
         private readonly Bindable<bool> doNotPushBack = new();
-        private readonly Bindable<bool> halfGhost = new();
         private readonly Bindable<float> noteThickness = new();
         private readonly Bindable<float> noteCornerRadius = new();
         private readonly Bindable<SpacePalette> palette = new();
@@ -37,6 +37,9 @@ namespace osu.Game.Rulesets.Space.Objects.Drawables
         private readonly Bindable<bool> bloom = new();
         private readonly Bindable<float> bloomStrength = new();
         private readonly Bindable<float> hitWindow = new();
+
+        public bool FullGhost { get; set; }
+
         public DrawableSpaceHitObject(SpaceHitObject hitObject)
             : base(hitObject)
         {
@@ -48,16 +51,30 @@ namespace osu.Game.Rulesets.Space.Objects.Drawables
         [Resolved]
         private DrawableSpaceRuleset ruleset { get; set; }
 
+        [Resolved(CanBeNull = true)]
+        private osu.Game.Screens.Edit.EditorBeatmap editorBeatmap { get; set; }
+
         [BackgroundDependencyLoader(true)]
         private void load(SpaceRulesetConfigManager config)
         {
+            if (ruleset != null)
+            {
+                foreach (var mod in ruleset.Mods)
+                {
+                    if (mod is SpaceModFullGhost)
+                    {
+                        FullGhost = true;
+                        break;
+                    }
+                }
+            }
+
             config?.BindWith(SpaceRulesetSetting.noteOpacity, noteOpacity);
             config?.BindWith(SpaceRulesetSetting.noteScale, noteScale);
             config?.BindWith(SpaceRulesetSetting.approachRate, approachRate);
             config?.BindWith(SpaceRulesetSetting.spawnDistance, spawnDistance);
             config?.BindWith(SpaceRulesetSetting.fadeLength, fadeLength);
             config?.BindWith(SpaceRulesetSetting.doNotPushBack, doNotPushBack);
-            config?.BindWith(SpaceRulesetSetting.halfGhost, halfGhost);
             config?.BindWith(SpaceRulesetSetting.NoteThickness, noteThickness);
             config?.BindWith(SpaceRulesetSetting.NoteCornerRadius, noteCornerRadius);
             config?.BindWith(SpaceRulesetSetting.Palette, palette);
@@ -137,7 +154,6 @@ namespace osu.Game.Rulesets.Space.Objects.Drawables
             float userSpawnDistance = spawnDistance.Value;
             float userFadeLength = fadeLength.Value;
             bool userDoNotPushBack = doNotPushBack.Value;
-            bool userHalfGhost = halfGhost.Value;
 
             double timeRemaining = HitObject.StartTime - Time.Current;
             float speed = userAr;
@@ -145,15 +161,11 @@ namespace osu.Game.Rulesets.Space.Objects.Drawables
 
             if (!Judged && current_dist > userSpawnDistance)
             {
-                Alpha = 0;
-                return;
+                content.Alpha = 0;
             }
 
             if (!userDoNotPushBack && current_dist < -0.2f)
-            {
-                Alpha = 0;
-                return;
-            }
+                content.Alpha = 0;
 
             const float camera_z = 3.75f;
             float z = camera_z + current_dist;
@@ -182,11 +194,11 @@ namespace osu.Game.Rulesets.Space.Objects.Drawables
                 alpha = MathF.Pow(Math.Clamp(fadeProgress, 0, 1), 1.3f);
             }
 
-            if (userHalfGhost)
+            if (FullGhost)
             {
                 float fade_out_start = 12.0f / 50f * userAr;
                 float fade_out_end = 3.0f / 50f * userAr;
-                float fade_out_base = 0.8f;
+                float fade_out_base = 1.0f;
 
                 float fadeOutProgress = (current_dist - fade_out_end) / (fade_out_start - fade_out_end);
                 float fadeOutAlpha = 1 - fade_out_base + (MathF.Pow(Math.Clamp(fadeOutProgress, 0, 1), 1.3f) * fade_out_base);
@@ -194,11 +206,12 @@ namespace osu.Game.Rulesets.Space.Objects.Drawables
                 alpha = Math.Min(alpha, fadeOutAlpha);
             }
 
-            Alpha = alpha * userNoteOpacity;
+            content.Alpha = alpha * userNoteOpacity;
+
 
             if (rawScale >= 2f && HitObject.oX >= 1 && HitObject.oX <= 1.5 || (rawScale >= 1f && HitObject.IsHitOk))
             {
-                Alpha = 0;
+                content.Alpha = 0;
                 Scale = new Vector2(2f);
             }
         }
