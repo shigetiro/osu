@@ -11,6 +11,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Logging;
 using osu.Framework.Screens;
+using System.Globalization;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
 using osu.Game.Database;
@@ -22,6 +23,7 @@ using osu.Game.Online.Spectator;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Scoring;
 using osu.Game.Screens.Ranking;
+using osu.Game.Rulesets;
 
 namespace osu.Game.Screens.Play
 {
@@ -43,6 +45,9 @@ namespace osu.Game.Screens.Play
 
         [Resolved]
         private SessionStatics statics { get; set; }
+
+        [Resolved]
+        private IRulesetConfigCache rulesetConfigCache { get; set; }
 
         [Resolved(canBeNull: true)]
         [CanBeNull]
@@ -267,10 +272,11 @@ namespace osu.Game.Screens.Play
                 // compare: https://github.com/ppy/osu/blob/ccf1acce56798497edfaf92d3ece933469edcf0a/osu.Game/Screens/Play/Player.cs#L848-L851
                 var scoreCopy = score.DeepClone();
 
+                spectatorClient.EndPlaying(GameplayState);
+
                 Task.Run(async () =>
                 {
                     await submitScore(scoreCopy).ConfigureAwait(false);
-                    spectatorClient.EndPlaying(GameplayState);
                 }).FireAndForget();
             }
         }
@@ -319,6 +325,29 @@ namespace osu.Game.Screens.Play
             {
                 Logger.Log("Zero score, skipping score submission");
                 return Task.CompletedTask;
+            }
+
+            if (GameplayState.Ruleset?.RulesetInfo?.ShortName == "osuspaceruleset")
+            {
+                float hitWindow = 25f;
+                float? configured = realm.Run(r =>
+                {
+                    var s = r.All<RealmRulesetSetting>()
+                        .FirstOrDefault(x => x.RulesetName == "osuspaceruleset" && x.Key == "HitWindow");
+                    if (s == null)
+                        return (float?)null;
+                    if (float.TryParse(s.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
+                        return parsed;
+                    return (float?)null;
+                });
+                if (configured.HasValue)
+                    hitWindow = configured.Value;
+
+                if (hitWindow < 25f || hitWindow > 55f)
+                {
+                    Logger.Log($"Score submission cancelled due to invalid Space hitwindow ({hitWindow}ms).");
+                    return Task.CompletedTask;
+                }
             }
 
             // mind the timing of this.
