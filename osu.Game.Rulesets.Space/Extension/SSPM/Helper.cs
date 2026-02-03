@@ -122,8 +122,8 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
             string artist,
             string creator,
             int difficulty,
-            byte[] musicData,
-            byte[] coverData,
+            byte[]? musicData,
+            byte[]? coverData,
             List<(int time, float x, float y)> notes
         )
         {

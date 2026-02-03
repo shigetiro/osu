@@ -1,32 +1,33 @@
 #nullable enable
 
-using System;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
-using osu.Framework.Graphics.Sprites;
-using osu.Framework.Logging;
-using osu.Framework.Platform;
 using osu.Framework.Screens;
-using osu.Game.Beatmaps;
-using osu.Game.Database;
 using osu.Game.Graphics;
-using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterfaceV2;
-using osu.Game.Online.API;
 using osu.Game.Overlays;
-using osu.Game.Overlays.Dialog;
-using osu.Game.Overlays.Notifications;
 using osu.Game.Screens;
-using osu.Game.Screens.OnlinePlay.Match.Components;
-using osu.Game.Screens.SelectV2;
 using osuTK;
+using osu.Framework.Platform;
+using osu.Game.Overlays.Notifications;
+using osu.Game.Graphics.Sprites;
+using osu.Framework.Graphics.Sprites;
+using System.Threading.Tasks;
+using osu.Game.Beatmaps;
+using System;
+using osu.Game.Overlays.Dialog;
+using osu.Game.Database;
+using System.Linq;
+using System.Drawing;
+using osu.Game.Screens.OnlinePlay.Match.Components;
+using System.IO;
+using osu.Game.Screens.SelectV2;
+using Microsoft.Extensions.Logging;
+using osu.Framework.Logging;
+using osu.Game.Online.API;
+using osu.Game.Online.Solo;
 
 namespace osu.Game.Rulesets.Space.Extension.SSPM
 {
@@ -54,6 +55,9 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
         private OsuGame? game { get; set; }
 
         [Resolved]
+        private osu.Game.Online.API.IAPIProvider api { get; set; } = null!;
+
+        [Resolved]
         private BeatmapManager? beatmapManager { get; set; }
 
         [Resolved]
@@ -61,9 +65,6 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
 
         [Resolved]
         private RealmAccess realm { get; set; } = null!;
-
-        [Resolved]
-        private IAPIProvider api { get; set; } = null!;
 
         private OsuDirectorySelector? directorySelector;
 
@@ -98,7 +99,7 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
                     {
                         new Box
                         {
-                            Colour = colours.GreySeaFoamDark,
+                            Colour = colours?.GreySeaFoamDark ?? Colour4.Gray,
                             RelativeSizeAxes = Axes.Both,
                         },
                         new GridContainer
@@ -231,8 +232,8 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
 
                 var notification = new ProgressNotification
                 {
-                    Text = "Importing Sound Space Plus map files...",
-                    CompletionText = "Import Sound Space Plus map complete!",
+                    Text = "Importing and registering Sound Space Plus map files...",
+                    CompletionText = "Import and registration of Sound Space Plus maps complete!",
                     State = ProgressNotificationState.Active,
                     CompletionClickAction = () =>
                     {
@@ -263,6 +264,16 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
                         {
                             notification.State = ProgressNotificationState.Completed;
                         }
+                    }, (registrationStatus) =>
+                    {
+                        Schedule(() =>
+                        {
+                            notifications?.Post(new SimpleNotification
+                            {
+                                Text = registrationStatus,
+                                Icon = registrationStatus.Contains("successfully") ? FontAwesome.Solid.CheckCircle : FontAwesome.Solid.InfoCircle,
+                            });
+                        });
                     });
                 });
 

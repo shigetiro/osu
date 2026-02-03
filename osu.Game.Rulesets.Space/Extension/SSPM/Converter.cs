@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Linq;
 using osu.Framework.Logging;
 using osu.Game.Database;
 using System.Threading;
@@ -11,6 +12,9 @@ using osu.Game.Beatmaps;
 using osu.Framework.Extensions;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests;
+using osu.Game.Rulesets;
+using Realms;
+using System.IO;
 
 namespace osu.Game.Rulesets.Space.Extension.SSPM
 {
@@ -18,16 +22,22 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
     {
         private readonly BeatmapManager beatmapManager;
         private readonly RulesetStore rulesetStore;
-        private readonly IAPIProvider api;
+        private readonly IAPIProvider? api;
 
-        public SSPMConverter(BeatmapManager beatmapManager, RulesetStore rulesetStore, IAPIProvider api)
+        public SSPMConverter(BeatmapManager beatmapManager, RulesetStore rulesetStore)
         {
             this.beatmapManager = beatmapManager;
             this.rulesetStore = rulesetStore;
+            this.api = null;
+        }
+
+        public SSPMConverter(BeatmapManager beatmapManager, RulesetStore rulesetStore, IAPIProvider api)
+            : this(beatmapManager, rulesetStore)
+        {
             this.api = api;
         }
 
-        public void ImportFromDirectory(string directory, CancellationToken cancellationToken, Action<int, int, int, bool, bool>? onProgress = null)
+        public void ImportFromDirectory(string directory, CancellationToken cancellationToken, Action<int, int, int, bool, bool>? onProgress = null, Action<string>? onRegistrationStatus = null)
         {
             if (!Directory.Exists(directory))
             {
@@ -70,28 +80,103 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
 
                         if (importedSet != null)
                         {
-                            var spaceRuleset = rulesetStore.GetRuleset("osuspaceruleset");
-                            if (spaceRuleset != null)
+                            int extractedId = -1;
+                            importedSet.PerformWrite(s =>
                             {
-                                importedSet.PerformWrite(s =>
+                                var realmContext = s.Realm!;
+                                var managedSpaceRuleset =
+                                    realmContext.Find<RulesetInfo>("osuspaceruleset")
+                                    ?? realmContext.All<RulesetInfo>().FirstOrDefault(rs => rs.ShortName == "osuspaceruleset");
+
+                                if (managedSpaceRuleset != null)
                                 {
                                     foreach (var b in s.Beatmaps)
                                     {
-                                        b.Ruleset = spaceRuleset;
-                                        // Add sspm tag to identify this as a Rhythia beatmap
-                                        if (string.IsNullOrEmpty(b.Metadata.Tags))
-                                            b.Metadata.Tags = "sspm";
-                                        else if (!b.Metadata.Tags.Contains("sspm", StringComparison.OrdinalIgnoreCase))
-                                            b.Metadata.Tags += " sspm";
+                                        b.Ruleset = managedSpaceRuleset;
+                                        string tags = b.Metadata.Tags ?? string.Empty;
+                                        var m = System.Text.RegularExpressions.Regex.Match(tags, @"sspm\s+(\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                        if (m.Success)
+                                        {
+                                            if (int.TryParse(m.Groups[1].Value, out var idVal))
+                                            {
+                                                b.OnlineID = idVal;
+                                                extractedId = idVal;
+                                            }
+                                        }
                                     }
-                                });
+                                }
+                                else
+                                {
+                                    Logger.Log("Could not find osuspaceruleset in ruleset store.");
+                                }
+                            });
 
-                                var request = new UpdateBeatmapRankStatusRequest(importedSet.Value.OnlineID, BeatmapRankStatus.Ranked);
-                                api.Perform(request);
-                            }
-                            else
+                            if (api != null)
                             {
-                                Logger.Log("Could not find osuspaceruleset in ruleset store.");
+                                try
+                                {
+                                    var bytes = File.Exists(oszPath) ? File.ReadAllBytes(oszPath) : null;
+                                    if (bytes != null)
+                                    {
+                                        var uploadReq = new UploadSSPMMapRequest(bytes, Path.GetFileName(oszPath));
+                                        uploadReq.Success += () =>
+                                        {
+                                            Logger.Log("SSPM map uploaded to server.");
+                                            onRegistrationStatus?.Invoke($"Map {Path.GetFileNameWithoutExtension(file)} registered successfully");
+                                        };
+                                        uploadReq.Failure += _ =>
+                                        {
+                                            if (extractedId > 0)
+                                            {
+                                                var registerReq = new RegisterRhythiaMapRequest(extractedId);
+                                                registerReq.Success += () =>
+                                                {
+                                                    onRegistrationStatus?.Invoke($"Map {Path.GetFileNameWithoutExtension(file)} registered successfully");
+                                                };
+                                                registerReq.Failure += __ =>
+                                                {
+                                                    onRegistrationStatus?.Invoke($"Map {Path.GetFileNameWithoutExtension(file)} registration failed");
+                                                };
+                                                if (api.State.Value == APIState.Offline)
+                                                    api.Perform(registerReq);
+                                                else
+                                                    api.Queue(registerReq);
+                                            }
+                                            else
+                                            {
+                                                onRegistrationStatus?.Invoke($"Map {Path.GetFileNameWithoutExtension(file)} registration failed - no map ID found");
+                                            }
+                                        };
+                                        if (api.State.Value == APIState.Offline)
+                                            api.Perform(uploadReq);
+                                        else
+                                            api.Queue(uploadReq);
+                                    }
+                                    else if (extractedId > 0)
+                                    {
+                                        var registerReq = new RegisterRhythiaMapRequest(extractedId);
+                                        registerReq.Success += () =>
+                                        {
+                                            onRegistrationStatus?.Invoke($"Map {Path.GetFileNameWithoutExtension(file)} registered successfully");
+                                        };
+                                        registerReq.Failure += __ =>
+                                        {
+                                            onRegistrationStatus?.Invoke($"Map {Path.GetFileNameWithoutExtension(file)} registration failed");
+                                        };
+                                        if (api.State.Value == APIState.Offline)
+                                            api.Perform(registerReq);
+                                        else
+                                            api.Queue(registerReq);
+                                    }
+                                    else
+                                    {
+                                        onRegistrationStatus?.Invoke($"Map {Path.GetFileNameWithoutExtension(file)} registration skipped - no map ID found");
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    Logger.Log($"Failed to upload/register SSPM map: {e.Message}");
+                                }
                             }
                         }
 
@@ -119,7 +204,7 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
                 // header
                 byte[] signature = reader.ReadBytes(4);
                 if (Encoding.ASCII.GetString(signature) != "SS+m")
-                    throw new Exception("Invalid SSPM signature");
+                    throw new InvalidDataException("Invalid SSPM signature");
 
                 short version = reader.ReadInt16();
 
@@ -128,7 +213,7 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
                 else if (version == 2)
                     return parseV2(reader, sspmPath);
                 else
-                    throw new Exception($"Unknown SSPM version: {version}");
+                    throw new InvalidDataException($"Unknown SSPM version: {version}");
             }
         }
 
@@ -207,7 +292,7 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
                 byte markerTypeIndex = reader.ReadByte();
 
                 if (markerTypeIndex >= markerDefs.Count)
-                    throw new Exception($"Invalid marker type index: {markerTypeIndex}");
+                    throw new InvalidDataException($"Invalid marker type index: {markerTypeIndex}");
 
                 var def = markerDefs[markerTypeIndex];
 
@@ -258,7 +343,7 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
                             reader.ReadBytes(len32);
                             break;
                         default:
-                            throw new Exception($"Unknown data type in marker: {type}");
+                            throw new InvalidDataException($"Unknown data type in marker: {type}");
                     }
                 }
 
@@ -268,7 +353,7 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
                 }
             }
 
-            return SSPMHelper.CreateOSZ(originalPath, id, name, artist, creator, (int)difficulty, musicData, coverData, notes);
+            return SSPMHelper.CreateOSZ(originalPath, id, name, artist, creator, difficulty, musicData ?? Array.Empty<byte>(), coverData ?? Array.Empty<byte>(), notes);
         }
 
         private string readString16(BinaryReader reader)
@@ -340,7 +425,7 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
                 notes.Add((time, x, y));
             }
 
-            return SSPMHelper.CreateOSZ(originalPath, id, name, artist, creator, (int)difficulty, musicData, coverData, notes);
+            return SSPMHelper.CreateOSZ(originalPath, id, name, artist, creator, difficulty, musicData ?? Array.Empty<byte>(), coverData ?? Array.Empty<byte>(), notes);
         }
     }
 

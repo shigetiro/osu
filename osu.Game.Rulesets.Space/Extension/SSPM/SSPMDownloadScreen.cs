@@ -17,6 +17,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Rendering;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Textures;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.IO.Network;
 using osu.Framework.Logging;
@@ -28,12 +29,14 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API;
+using osu.Game.Online.API.Requests;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Rulesets;
 using osu.Game.Screens;
 using osuTK;
 using osuTK.Graphics;
+using Realms;
 
 namespace osu.Game.Rulesets.Space.Extension.SSPM
 {
@@ -292,13 +295,6 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
             {
                 try
                 {
-                    // First register the beatmap in the database
-                    notification.Text = "Registering beatmap...";
-                    string registerUrl = $"{api.Endpoints.APIUrl}/api/v2/rhythia/maps/{id}/register";
-                    var registerReq = new WebRequest(registerUrl);
-                    registerReq.Method = HttpMethod.Post;
-                    await registerReq.PerformAsync();
-
                     string url = $"{api.Endpoints.APIUrl}/api/v2/rhythia/download/{id}";
                     var req = new WebRequest(url);
                     await req.PerformAsync();
@@ -318,18 +314,82 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
 
                     if (File.Exists(oszPath))
                     {
+                        var oszBytes = await File.ReadAllBytesAsync(oszPath);
                         var importTask = new ImportTask(oszPath);
-                        await beatmapManager.Import(importTask);
+                        var importedSet = await beatmapManager.Import(importTask);
+                        if (importedSet != null)
+                        {
+                            importedSet.PerformWrite(s =>
+                            {
+                                Realm realmContext = s.Realm!;
+                                var managedSpaceRuleset =
+                                    realmContext.Find<RulesetInfo>("osuspaceruleset")
+                                    ?? realmContext.All<RulesetInfo>().FirstOrDefault(rs => rs.ShortName == "osuspaceruleset");
+
+                                if (managedSpaceRuleset != null)
+                                {
+                                    foreach (var b in s.Beatmaps)
+                                    {
+                                        b.Ruleset = managedSpaceRuleset;
+                                        b.OnlineID = id;
+                                        string tags = b.Metadata.Tags ?? string.Empty;
+                                        if (!tags.Contains("sspm", StringComparison.OrdinalIgnoreCase) ||
+                                            !System.Text.RegularExpressions.Regex.IsMatch(tags, @"sspm\s+\d+", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                                        {
+                                            b.Metadata.Tags = $"sspm {id} osuspaceruleset";
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        var uploadReq = new UploadSSPMMapRequest(oszBytes, Path.GetFileName(oszPath));
+                        uploadReq.Success += () =>
+                        {
+                            notifications?.Post(new SimpleNotification
+                            {
+                                Text = "SSPM map registered",
+                                Icon = FontAwesome.Solid.CheckCircle,
+                            });
+                        };
+                        uploadReq.Failure += _ =>
+                        {
+                            var registerReq = new RegisterRhythiaMapRequest(id);
+                            registerReq.Success += () =>
+                            {
+                                notifications?.Post(new SimpleNotification
+                                {
+                                    Text = "SSPM map registered",
+                                    Icon = FontAwesome.Solid.CheckCircle,
+                                });
+                            };
+                            registerReq.Failure += __ =>
+                            {
+                                notifications?.Post(new SimpleNotification
+                                {
+                                    Text = "SSPM map registration failed",
+                                    Icon = FontAwesome.Solid.ExclamationTriangle,
+                                });
+                            };
+                            if (api.State.Value == APIState.Offline)
+                                api.Perform(registerReq);
+                            else
+                                api.Queue(registerReq);
+                        };
+                        if (api.State.Value == APIState.Offline)
+                            await api.PerformAsync(uploadReq);
+                        else
+                            api.Queue(uploadReq);
 
                         // Clean up
-                        File.Delete(tempFile);
-                        File.Delete(oszPath); // BeatmapManager likely moved it, but just in case if it was a copy
+                        try { File.Delete(tempFile); } catch { }
+                        try { File.Delete(oszPath); } catch { }
 
                         notification.State = ProgressNotificationState.Completed;
                     }
                     else
                     {
-                        throw new Exception("Conversion failed (osz not found).");
+                        throw new InvalidOperationException("Conversion failed (osz not found).");
                     }
                 }
                 catch (Exception ex)
@@ -362,10 +422,15 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
 
                 int id = data["id"]?.Value<int>() ?? 0;
                 string title = data["beatmap"]?["title"]?.Value<string>() ?? "Unknown Title";
-                string artist = "Unknown Artist";
+                string artist = data["beatmap"]?["artist"]?.Value<string>() ?? "Unknown Artist";
                 string mapper = data["beatmap"]?["ownerUsername"]?.Value<string>() ?? "Unknown Mapper";
                 float stars = data["beatmap"]?["starRating"]?.Value<float>() ?? 0;
-                string? coverUrl = data["cover"]?.Value<string>() ?? data["beatmap"]?["cover"]?.Value<string>();
+                string? coverUrl = data["cover"]?.Value<string>() ?? data["beatmap"]?["cover"]?.Value<string>() ?? data["beatmapset"]?["covers"]?["cover"]?.Value<string>();
+
+                if (!string.IsNullOrEmpty(coverUrl))
+                {
+                    Logger.Log($"Found cover URL for map {id}: {coverUrl}");
+                }
 
                 InternalChildren = new Drawable[]
                 {
@@ -400,7 +465,7 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
                                 {
                                     new OsuSpriteText
                                     {
-                                        Text = title,
+                                        Text = $"{artist} - {title}",
                                         Font = OsuFont.GetFont(size: 20, weight: FontWeight.Bold)
                                     },
                                     new OsuSpriteText
@@ -445,6 +510,13 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
             protected override void LoadComplete()
             {
                 base.LoadComplete();
+                loadCover();
+            }
+
+            private void loadCover()
+            {
+                if (string.IsNullOrEmpty(url)) return;
+
                 Task.Run(async () =>
                 {
                     try
@@ -454,11 +526,25 @@ namespace osu.Game.Rulesets.Space.Extension.SSPM
                         var data = req.GetResponseData();
                         if (data != null)
                         {
-                            var texture = osu.Framework.Graphics.Textures.Texture.FromStream(renderer, new MemoryStream(data));
-                            Schedule(() => Texture = texture);
+                            // Ensure we are on the update thread when creating the texture
+                            Schedule(() =>
+                            {
+                                try
+                                {
+                                    var texture = Texture.FromStream(renderer, new MemoryStream(data));
+                                    Texture = texture;
+                                }
+                                catch (Exception ex)
+                                {
+                                    Logger.Error(ex, $"Failed to create texture from {url}");
+                                }
+                            });
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        Logger.Error(ex, $"Failed to fetch cover from {url}");
+                    }
                 });
             }
         }
