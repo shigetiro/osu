@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
@@ -22,7 +23,7 @@ namespace osu.Game.Beatmaps
 
         private readonly BeatmapUpdaterMetadataLookup metadataLookup;
 
-        private const int update_queue_request_concurrency = 4;
+        private static readonly int update_queue_request_concurrency = Environment.ProcessorCount;
 
         private readonly ThreadedTaskScheduler updateScheduler = new ThreadedTaskScheduler(update_queue_request_concurrency, nameof(BeatmapUpdaterMetadataLookup));
 

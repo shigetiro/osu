@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
 using Humanizer;
 using osu.Framework.Extensions;
 using osu.Framework.Extensions.IEnumerableExtensions;
@@ -32,7 +33,7 @@ namespace osu.Game.Database
         /// <summary>
         /// The maximum number of concurrent imports to run per import scheduler.
         /// </summary>
-        private const int import_queue_request_concurrency = 1;
+        private static readonly int import_queue_request_concurrency = Environment.ProcessorCount;
 
         /// <summary>
         /// The minimum number of items in a single import call in order for the import to be processed as a batch.

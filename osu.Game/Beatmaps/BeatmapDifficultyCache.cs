@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
 using osu.Framework.Allocation;
 using osu.Framework.Audio.Track;
 using osu.Framework.Bindables;
@@ -36,7 +37,7 @@ namespace osu.Game.Beatmaps
     public partial class BeatmapDifficultyCache : MemoryCachingComponent<BeatmapDifficultyCache.DifficultyCacheLookup, StarDifficulty?>
     {
         // Too many simultaneous updates can lead to stutters. One thread seems to work fine for song select display purposes.
-        private readonly ThreadedTaskScheduler updateScheduler = new ThreadedTaskScheduler(1, nameof(BeatmapDifficultyCache));
+        private readonly ThreadedTaskScheduler updateScheduler = new ThreadedTaskScheduler(Environment.ProcessorCount, nameof(BeatmapDifficultyCache));
 
         /// <summary>
         /// All bindables that should be updated along with the current ruleset + mods.
