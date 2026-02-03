@@ -302,7 +302,10 @@ namespace osu.Game.Screens.Edit
 
             editorBeatmap.UpdateInProgress.BindValueChanged(_ => updateSampleDisabledState());
 
-            canSave = editorBeatmap.BeatmapInfo.Ruleset.CreateInstance() is ILegacyRuleset;
+            // Saving and legacy diff-state tracking only supported for base rulesets (osu/taiko/catch/mania).
+            var rulesetInfo = editorBeatmap.BeatmapInfo.Ruleset;
+            canSave = rulesetInfo.CreateInstance() is ILegacyRuleset
+                      && rulesetInfo.OnlineID >= 0 && rulesetInfo.OnlineID <= 3;
 
             if (canSave)
             {
