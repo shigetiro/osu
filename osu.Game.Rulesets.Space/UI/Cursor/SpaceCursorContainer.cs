@@ -90,7 +90,6 @@ namespace osu.Game.Rulesets.Space.UI.Cursor
             {
                 Vector2 availableSize = playfield.contentContainer.DrawSize;
 
-                // If the playfield hasn't been loaded or sized yet, don't clamp (or clamp to a safe default)
                 if (availableSize == Vector2.Zero)
                     return false;
 
@@ -99,8 +98,10 @@ namespace osu.Game.Rulesets.Space.UI.Cursor
 
                 Vector2 minBound = (DrawSize - actualSize) / 2;
                 Vector2 maxBound = minBound + actualSize;
-
-                ActiveCursor.Position = Vector2.Clamp(ActiveCursor.Position, minBound, maxBound);
+                Vector2 halfSize = ActiveCursor.DrawSize / 2;
+                minBound += halfSize;
+                maxBound -= halfSize;
+                ActiveCursor.Position = Vector2.Clamp(e.MousePosition, minBound, maxBound);
 
                 if (cursorTrail.Drawable is CursorTrail trail)
                 {

@@ -19,6 +19,7 @@ namespace osu.Game.Rulesets.Space.UI
         public readonly SpaceMiss spaceMiss;
         private readonly Bindable<float> parallaxStrength = new();
         private readonly Bindable<bool> enableGrid = new();
+        private readonly Bindable<bool> enableQuantum = new();
         private readonly Bindable<float> scalePlayfield = new(0.6f);
         public static readonly float BASE_SIZE = 512;
         protected override GameplayCursorContainer CreateCursor() => new SpaceCursorContainer
@@ -100,5 +101,7 @@ namespace osu.Game.Rulesets.Space.UI
             Vector2 normalized = new Vector2(local.X / HitObjectContainer.DrawSize.X, local.Y / HitObjectContainer.DrawSize.Y);
             return normalized * BASE_SIZE;
         }
+
+        public Bindable<bool> EnableQuantum => enableQuantum;
     }
 }
