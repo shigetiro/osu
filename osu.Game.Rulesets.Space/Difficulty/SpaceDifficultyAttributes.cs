@@ -13,6 +13,18 @@ namespace osu.Game.Rulesets.Space.Difficulty
         [JsonProperty("reading_difficulty")]
         public double ReadingDifficulty { get; set; }
 
+        [JsonProperty("stamina_difficulty")]
+        public double StaminaDifficulty { get; set; }
+
+        [JsonProperty("control_difficulty")]
+        public double ControlDifficulty { get; set; }
+
+        [JsonProperty("flow_difficulty")]
+        public double FlowDifficulty { get; set; }
+
+        [JsonProperty("consistency_difficulty")]
+        public double ConsistencyDifficulty { get; set; }
+
         public SpaceDifficultyAttributes()
         {
         }
@@ -27,8 +39,12 @@ namespace osu.Game.Rulesets.Space.Difficulty
             foreach (var v in base.ToDatabaseAttributes())
                 yield return v;
 
-            yield return (11, AimDifficulty); // IDs should be unique per ruleset? Osu uses 1, 3 etc. I'll use arbitary for now or check if there's a convention.
+            yield return (11, AimDifficulty);
             yield return (13, ReadingDifficulty);
+            yield return (15, StaminaDifficulty);
+            yield return (17, ControlDifficulty);
+            yield return (19, FlowDifficulty);
+            yield return (21, ConsistencyDifficulty);
         }
 
         public override void FromDatabaseAttributes(IReadOnlyDictionary<int, double> values, osu.Game.Beatmaps.IBeatmapOnlineInfo onlineInfo)
@@ -37,6 +53,10 @@ namespace osu.Game.Rulesets.Space.Difficulty
 
             AimDifficulty = values.GetValueOrDefault(11);
             ReadingDifficulty = values.GetValueOrDefault(13);
+            StaminaDifficulty = values.GetValueOrDefault(15);
+            ControlDifficulty = values.GetValueOrDefault(17);
+            FlowDifficulty = values.GetValueOrDefault(19);
+            ConsistencyDifficulty = values.GetValueOrDefault(21);
         }
     }
 }

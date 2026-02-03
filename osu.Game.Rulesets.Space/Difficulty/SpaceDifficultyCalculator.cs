@@ -30,10 +30,18 @@ namespace osu.Game.Rulesets.Space
 
             double aimRating = ratingCalculator.ComputeRating(skills[0].DifficultyValue());
             double readingRating = ratingCalculator.ComputeRating(skills[1].DifficultyValue());
+            double staminaRating = ratingCalculator.ComputeRating(skills[2].DifficultyValue());
+            double controlRating = ratingCalculator.ComputeRating(skills[3].DifficultyValue());
+            double flowRating = ratingCalculator.ComputeRating(skills[4].DifficultyValue());
+            double consistencyRating = ratingCalculator.ComputeRating(skills[5].DifficultyValue());
 
             double baseRating = Math.Pow(
                 Math.Pow(aimRating, 1.1) +
-                Math.Pow(readingRating, 1.1),
+                Math.Pow(readingRating, 1.1) +
+                Math.Pow(staminaRating, 1.1) +
+                Math.Pow(controlRating, 1.1) +
+                Math.Pow(flowRating, 1.1) +
+                Math.Pow(consistencyRating, 1.1),
                 1.0 / 1.1
             );
 
@@ -42,7 +50,11 @@ namespace osu.Game.Rulesets.Space
             var attributes = new SpaceDifficultyAttributes(mods, starRating)
             {
                 AimDifficulty = aimRating,
-                ReadingDifficulty = readingRating
+                ReadingDifficulty = readingRating,
+                StaminaDifficulty = staminaRating,
+                ControlDifficulty = controlRating,
+                FlowDifficulty = flowRating,
+                ConsistencyDifficulty = consistencyRating
             };
 
             return attributes;
@@ -72,6 +84,10 @@ namespace osu.Game.Rulesets.Space
             [
                 new Aim(mods),
                 new Reading(mods),
+                new Stamina(mods),
+                new Control(mods),
+                new Flow(mods),
+                new Consistency(mods),
             ];
         }
     }

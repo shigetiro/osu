@@ -31,6 +31,8 @@ namespace osu.Game.Rulesets.Space.Difficulty
                 multiplier *= 0.9;
             if (score.Mods.Any(m => m is ModEasy))
                 multiplier *= 0.5;
+            if (score.Mods.Any(m => m is ModHidden))
+                multiplier *= 1.06;
 
             // Get map stats
             double approachRate = score.BeatmapInfo.Difficulty.ApproachRate;
@@ -58,10 +60,26 @@ namespace osu.Game.Rulesets.Space.Difficulty
 
             double aimPP = computeComponentValue(spaceAttributes.AimDifficulty, score, approachRate, circleSize, overallDifficulty);
             double readingPP = computeComponentValue(spaceAttributes.ReadingDifficulty, score, approachRate, circleSize, overallDifficulty);
+            double staminaPP = computeComponentValue(spaceAttributes.StaminaDifficulty, score, approachRate, circleSize, overallDifficulty);
+            double controlPP = computeComponentValue(spaceAttributes.ControlDifficulty, score, approachRate, circleSize, overallDifficulty);
+            double flowPP = computeComponentValue(spaceAttributes.FlowDifficulty, score, approachRate, circleSize, overallDifficulty);
+            double consistencyPP = computeComponentValue(spaceAttributes.ConsistencyDifficulty, score, approachRate, circleSize, overallDifficulty);
+
+            double difficultySum = spaceAttributes.AimDifficulty + spaceAttributes.ReadingDifficulty + spaceAttributes.StaminaDifficulty + spaceAttributes.ControlDifficulty + spaceAttributes.FlowDifficulty + spaceAttributes.ConsistencyDifficulty;
+            if (difficultySum > 0)
+            {
+                double aimShare = spaceAttributes.AimDifficulty / difficultySum;
+                double speedEmphasis = 1.0 + 0.2 * aimShare;
+                aimPP *= speedEmphasis;
+            }
 
             double totalPP = Math.Pow(
                 Math.Pow(aimPP, 1.1) +
-                Math.Pow(readingPP, 1.1),
+                Math.Pow(readingPP, 1.1) +
+                Math.Pow(staminaPP, 1.1) +
+                Math.Pow(controlPP, 1.1) +
+                Math.Pow(flowPP, 1.1) +
+                Math.Pow(consistencyPP, 1.1),
                 1.0 / 1.1
             ) * multiplier;
 
@@ -69,6 +87,10 @@ namespace osu.Game.Rulesets.Space.Difficulty
             {
                 Aim = aimPP,
                 Reading = readingPP,
+                Stamina = staminaPP,
+                Control = controlPP,
+                Flow = flowPP,
+                Consistency = consistencyPP,
                 Total = totalPP
             };
         }
@@ -80,10 +102,11 @@ namespace osu.Game.Rulesets.Space.Difficulty
             // Standard osu! Difficulty to Performance formula
             double value = Math.Pow(5.0 * Math.Max(1.0, difficulty / 0.0675) - 4.0, 3.0) / 100000.0;
 
-            // Relax-style Length Bonus (shorter bonus than standard)
             int totalHits = score.Statistics.Values.Sum();
-            double lengthBonus = 0.88 + 0.4 * Math.Min(1.0, totalHits / 2000.0) +
-                                 (totalHits > 2000 ? Math.Log10(totalHits / 2000.0) * 0.5 : 0.0);
+            double scaledHits = Math.Min(1.0, totalHits / 1800.0);
+            double lengthBonus = 0.7 + 0.6 * scaledHits;
+            if (totalHits > 1800)
+                lengthBonus += 0.2 * Math.Log10(totalHits / 1800.0 + 1.0);
             value *= lengthBonus;
 
             // Relax-style Miss Penalty
