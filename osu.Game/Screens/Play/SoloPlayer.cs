@@ -5,6 +5,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using osu.Framework.Allocation;
 using osu.Game.Beatmaps;
@@ -39,6 +40,16 @@ namespace osu.Game.Screens.Play
             int beatmapId = Beatmap.Value.BeatmapInfo.OnlineID;
             int rulesetId = Ruleset.Value.OnlineID;
 
+            // Check for Rhythia/SSPM beatmap
+            if (Beatmap.Value.BeatmapInfo.Metadata?.Tags?.Contains("sspm", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var match = Regex.Match(Beatmap.Value.BeatmapInfo.Metadata.Tags ?? "", @"sspm\s+(\d+)", RegexOptions.IgnoreCase);
+                if (match.Success && int.TryParse(match.Groups[1].Value, out int sspmId))
+                {
+                    return new CreateRhythiaScoreTokenRequest(sspmId);
+                }
+            }
+
             if (beatmapId <= 0)
                 return null;
 
@@ -56,6 +67,16 @@ namespace osu.Game.Screens.Play
         protected override APIRequest<MultiplayerScore> CreateSubmissionRequest(Score score, long token)
         {
             IBeatmapInfo beatmap = score.ScoreInfo.BeatmapInfo!;
+
+            // Check for Rhythia/SSPM beatmap
+            if (beatmap.Metadata?.Tags?.Contains("sspm", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var match = Regex.Match(beatmap.Metadata.Tags ?? "", @"sspm\s+(\d+)", RegexOptions.IgnoreCase);
+                if (match.Success && int.TryParse(match.Groups[1].Value, out int sspmId))
+                {
+                    return new SubmitRhythiaScoreRequest(score.ScoreInfo, token, sspmId);
+                }
+            }
 
             Debug.Assert(beatmap.OnlineID > 0);
 
